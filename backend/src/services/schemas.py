@@ -7,7 +7,19 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from src.models.enums import TransactionDirection, TransactionType
+from src.models.enums import EntrySource, EntryStatus, TransactionDirection, TransactionType
+
+
+@dataclass(frozen=True, slots=True)
+class EntryCreate:
+    user_id: str
+    raw_text: str
+    source: EntrySource = EntrySource.manual_text
+    occurred_at_hint: datetime | None = None
+    parser_output_json: dict[str, Any] | None = None
+    parser_version: str | None = None
+    status: EntryStatus = EntryStatus.parsed
+    notes: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -2,37 +2,23 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.entry import Entry
-from src.models.enums import EntrySource, EntryStatus
+from src.services.schemas import EntryCreate
 
 
-async def create_entry(
-    session: AsyncSession,
-    *,
-    user_id: str,
-    raw_text: str,
-    source: EntrySource = EntrySource.manual_text,
-    occurred_at_hint: datetime | None = None,
-    parser_output_json: dict[str, Any] | None = None,
-    parser_version: str | None = None,
-    status: EntryStatus = EntryStatus.parsed,
-    notes: str | None = None,
-) -> Entry:
+async def create_entry(session: AsyncSession, *, entry: EntryCreate) -> Entry:
     entry = Entry(
-        user_id=user_id,
-        raw_text=raw_text,
-        source=source,
-        occurred_at_hint=occurred_at_hint,
-        parser_output_json=parser_output_json,
-        parser_version=parser_version,
-        status=status,
-        notes=notes,
+        user_id=entry.user_id,
+        raw_text=entry.raw_text,
+        source=entry.source,
+        occurred_at_hint=entry.occurred_at_hint,
+        parser_output_json=entry.parser_output_json,
+        parser_version=entry.parser_version,
+        status=entry.status,
+        notes=entry.notes,
     )
     session.add(entry)
     await session.commit()
