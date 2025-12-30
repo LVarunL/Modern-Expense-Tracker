@@ -11,16 +11,81 @@ depends_on = None
 
 
 def upgrade() -> None:
-    entry_source_enum = sa.Enum("manual_text", name="entry_source")
-    entry_status_enum = sa.Enum(
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'entry_source') THEN
+                CREATE TYPE entry_source AS ENUM ('manual_text');
+            END IF;
+        END $$;
+        """
+    )
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'entry_status') THEN
+                CREATE TYPE entry_status AS ENUM (
+                    'parsed',
+                    'pending_confirmation',
+                    'confirmed',
+                    'rejected'
+                );
+            END IF;
+        END $$;
+        """
+    )
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_direction') THEN
+                CREATE TYPE transaction_direction AS ENUM ('inflow', 'outflow');
+            END IF;
+        END $$;
+        """
+    )
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type') THEN
+                CREATE TYPE transaction_type AS ENUM (
+                    'expense',
+                    'income',
+                    'repayment_received',
+                    'repayment_sent',
+                    'refund',
+                    'transfer',
+                    'investment_income',
+                    'other'
+                );
+            END IF;
+        END $$;
+        """
+    )
+
+    entry_source_enum = postgresql.ENUM(
+        "manual_text",
+        name="entry_source",
+        create_type=False,
+    )
+    entry_status_enum = postgresql.ENUM(
         "parsed",
         "pending_confirmation",
         "confirmed",
         "rejected",
         name="entry_status",
+        create_type=False,
     )
-    transaction_direction_enum = sa.Enum("inflow", "outflow", name="transaction_direction")
-    transaction_type_enum = sa.Enum(
+    transaction_direction_enum = postgresql.ENUM(
+        "inflow",
+        "outflow",
+        name="transaction_direction",
+        create_type=False,
+    )
+    transaction_type_enum = postgresql.ENUM(
         "expense",
         "income",
         "repayment_received",
@@ -30,12 +95,8 @@ def upgrade() -> None:
         "investment_income",
         "other",
         name="transaction_type",
+        create_type=False,
     )
-
-    entry_source_enum.create(op.get_bind(), checkfirst=True)
-    entry_status_enum.create(op.get_bind(), checkfirst=True)
-    transaction_direction_enum.create(op.get_bind(), checkfirst=True)
-    transaction_type_enum.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "entries",

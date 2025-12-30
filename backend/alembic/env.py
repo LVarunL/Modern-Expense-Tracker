@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
+from src.config import get_settings  # noqa: E402
 from src.models.base import Base  # noqa: E402
 from src.models import entry, transaction  # noqa: F401, E402
 
@@ -24,10 +25,7 @@ target_metadata = Base.metadata
 
 
 def get_database_url() -> str:
-    url = os.getenv("DATABASE_URL")
-    if not url:
-        raise RuntimeError("DATABASE_URL is not set")
-    return url
+    return get_settings().database_url
 
 
 def run_migrations_offline() -> None:
