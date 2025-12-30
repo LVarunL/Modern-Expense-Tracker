@@ -6,10 +6,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.entry import Entry
+from src.models.enums import EntryStatus
 from src.services.schemas import EntryCreate
 
 
-async def create_entry(session: AsyncSession, *, entry: EntryCreate) -> Entry:
+async def create_entry(
+    session: AsyncSession,
+    *,
+    entry: EntryCreate,
+    commit: bool = True,
+) -> Entry:
     entry = Entry(
         user_id=entry.user_id,
         raw_text=entry.raw_text,
@@ -21,14 +27,33 @@ async def create_entry(session: AsyncSession, *, entry: EntryCreate) -> Entry:
         notes=entry.notes,
     )
     session.add(entry)
-    await session.commit()
-    await session.refresh(entry)
+    if commit:
+        await session.commit()
+        await session.refresh(entry)
+    else:
+        await session.flush()
     return entry
 
 
 async def get_entry(session: AsyncSession, entry_id: int) -> Entry | None:
     result = await session.execute(select(Entry).where(Entry.id == entry_id))
     return result.scalar_one_or_none()
+
+
+async def update_entry_status(
+    session: AsyncSession,
+    *,
+    entry: Entry,
+    status: EntryStatus,
+    commit: bool = True,
+) -> Entry:
+    entry.status = status
+    if commit:
+        await session.commit()
+        await session.refresh(entry)
+    else:
+        await session.flush()
+    return entry
 
 
 async def list_entries(

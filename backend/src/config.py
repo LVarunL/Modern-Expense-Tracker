@@ -11,6 +11,7 @@ from functools import lru_cache
 class Settings:
     database_url: str
     environment: str
+    default_user_id: str
 
 
 @lru_cache
@@ -21,4 +22,9 @@ def get_settings() -> Settings:
     if database_url.startswith("postgresql://"):
         database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
     environment = os.getenv("ENVIRONMENT", "development")
-    return Settings(database_url=database_url, environment=environment)
+    default_user_id = os.getenv("DEFAULT_USER_ID", "demo-user")
+    return Settings(
+        database_url=database_url,
+        environment=environment,
+        default_user_id=default_user_id,
+    )

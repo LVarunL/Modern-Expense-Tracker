@@ -55,7 +55,7 @@ class Transaction(Base):
         nullable=False,
         server_default="false",
     )
-    assumptions_json: Mapped[dict[str, Any] | None] = mapped_column(
+    assumptions_json: Mapped[dict[str, Any] | list[str] | None] = mapped_column(
         JSONB,
         nullable=True,
     )

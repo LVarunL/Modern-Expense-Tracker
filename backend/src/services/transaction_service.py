@@ -15,6 +15,7 @@ async def create_transactions(
     session: AsyncSession,
     *,
     items: list[TransactionCreate],
+    commit: bool = True,
 ) -> list[Transaction]:
     transactions = [
         Transaction(
@@ -34,9 +35,12 @@ async def create_transactions(
         for item in items
     ]
     session.add_all(transactions)
-    await session.commit()
-    for transaction in transactions:
-        await session.refresh(transaction)
+    if commit:
+        await session.commit()
+        for transaction in transactions:
+            await session.refresh(transaction)
+    else:
+        await session.flush()
     return transactions
 
 
@@ -69,3 +73,20 @@ async def list_transactions_for_entry(
     )
     result = await session.execute(query)
     return list(result.scalars())
+
+
+async def soft_delete_transactions_for_entry(
+    session: AsyncSession,
+    *,
+    entry_id: int,
+    commit: bool = True,
+) -> None:
+    await session.execute(
+        Transaction.__table__.update()
+        .where(Transaction.entry_id == entry_id)
+        .values(is_deleted=True)
+    )
+    if commit:
+        await session.commit()
+    else:
+        await session.flush()
