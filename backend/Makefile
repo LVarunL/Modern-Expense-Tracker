@@ -1,4 +1,4 @@
-.PHONY: run lint typecheck
+.PHONY: run lint typecheck test
 
 run:
 	uvicorn src.app:app --reload
@@ -8,3 +8,6 @@ lint:
 
 typecheck:
 	mypy src tests
+
+test:
+	pytest

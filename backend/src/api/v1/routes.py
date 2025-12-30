@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +22,14 @@ from src.services import (
     list_transactions as list_transactions_service,
     soft_delete_transactions_for_entry,
     update_entry_status,
+)
+from src.api.v1.examples import (
+    CONFIRM_REQUEST_EXAMPLES,
+    CONFIRM_RESPONSE_EXAMPLES,
+    PARSE_REQUEST_EXAMPLES,
+    PARSE_RESPONSE_EXAMPLES,
+    SUMMARY_RESPONSE_EXAMPLES,
+    TRANSACTIONS_RESPONSE_EXAMPLES,
 )
 from src.api.v1.schemas import (
     CategorySummary,
@@ -48,10 +56,15 @@ def health_check() -> dict[str, str]:
     "/parse",
     response_model=ParseResponse,
     status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {
+            "content": {"application/json": {"examples": PARSE_RESPONSE_EXAMPLES}},
+        }
+    },
     tags=["parse"],
 )
 async def parse_text(
-    payload: ParseRequest,
+    payload: ParseRequest = Body(..., examples=PARSE_REQUEST_EXAMPLES),
     session: AsyncSession = Depends(get_session),
 ) -> ParseResponse:
     settings = get_settings()
@@ -81,36 +94,44 @@ async def parse_text(
     "/entries/confirm",
     response_model=ConfirmResponse,
     status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {
+            "content": {"application/json": {"examples": CONFIRM_RESPONSE_EXAMPLES}},
+        }
+    },
     tags=["entries"],
 )
 async def confirm_entry(
-    payload: ConfirmRequest,
+    payload: ConfirmRequest = Body(..., examples=CONFIRM_REQUEST_EXAMPLES),
     session: AsyncSession = Depends(get_session),
 ) -> ConfirmResponse:
     settings = get_settings()
-    entry = await get_entry(session, payload.entry_id)
-    if not entry or entry.user_id != settings.default_user_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
-
-    transaction_inputs = [
-        TransactionCreate(
-            entry_id=entry.id,
-            occurred_at=item.occurred_at,
-            amount=item.amount,
-            currency=item.currency,
-            direction=item.direction,
-            type=item.type,
-            category=item.category,
-            subcategory=item.subcategory,
-            merchant=item.merchant,
-            confidence=item.confidence,
-            needs_confirmation=item.needs_confirmation,
-            assumptions_json=item.assumptions,
-        )
-        for item in payload.transactions
-    ]
-
     async with session.begin():
+        entry = await get_entry(session, payload.entry_id)
+        if not entry or entry.user_id != settings.default_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Entry not found",
+            )
+
+        transaction_inputs = [
+            TransactionCreate(
+                entry_id=entry.id,
+                occurred_at=item.occurred_at,
+                amount=item.amount,
+                currency=item.currency,
+                direction=item.direction,
+                type=item.type,
+                category=item.category,
+                subcategory=item.subcategory,
+                merchant=item.merchant,
+                confidence=item.confidence,
+                needs_confirmation=item.needs_confirmation,
+                assumptions_json=item.assumptions,
+            )
+            for item in payload.transactions
+        ]
+
         await soft_delete_transactions_for_entry(
             session,
             entry_id=entry.id,
@@ -131,7 +152,16 @@ async def confirm_entry(
     return ConfirmResponse(entry=entry, transactions=transactions)
 
 
-@router.get("/transactions", response_model=TransactionsResponse, tags=["transactions"])
+@router.get(
+    "/transactions",
+    response_model=TransactionsResponse,
+    responses={
+        200: {
+            "content": {"application/json": {"examples": TRANSACTIONS_RESPONSE_EXAMPLES}},
+        }
+    },
+    tags=["transactions"],
+)
 async def list_transactions(
     from_date: date | None = Query(default=None, alias="from"),
     to_date: date | None = Query(default=None, alias="to"),
@@ -147,10 +177,29 @@ async def list_transactions(
         limit=limit,
         offset=offset,
     )
-    return TransactionsResponse(items=items, count=len(items))
+    count_query = select(func.count(Transaction.id)).where(Transaction.is_deleted.is_(False))
+    if start:
+        count_query = count_query.where(Transaction.occurred_at >= start)
+    if end:
+        count_query = count_query.where(Transaction.occurred_at <= end)
+    total_count = await session.scalar(count_query)
+    return TransactionsResponse(
+        items=items,
+        count=len(items),
+        total_count=int(total_count or 0),
+        limit=limit,
+        offset=offset,
+    )
 
 
-@router.get("/summary", response_model=SummaryResponse, tags=["summary"])
+@router.get(
+    "/summary",
+    response_model=SummaryResponse,
+    responses={
+        200: {"content": {"application/json": {"examples": SUMMARY_RESPONSE_EXAMPLES}}},
+    },
+    tags=["summary"],
+)
 async def get_summary(
     month: str = Query(..., description="YYYY-MM"),
     session: AsyncSession = Depends(get_session),
@@ -195,10 +244,14 @@ async def get_summary(
         for direction, category, total in category_result.all()
     ]
 
+    count_query = select(func.count(Transaction.id)).where(*base_filters)
+    count_result = await session.scalar(count_query)
+
     return SummaryResponse(
         month=month,
         total_inflow=total_inflow,
         total_outflow=total_outflow,
         net=total_inflow - total_outflow,
         by_category=by_category,
+        transaction_count=int(count_result or 0),
     )

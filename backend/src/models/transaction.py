@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Numeric, String
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, JSON, Numeric, String, false
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,16 +53,16 @@ class Transaction(Base):
     needs_confirmation: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
-        server_default="false",
+        server_default=false(),
     )
     assumptions_json: Mapped[dict[str, Any] | list[str] | None] = mapped_column(
-        JSONB,
+        JSON().with_variant(JSONB, "postgresql"),
         nullable=True,
     )
     is_deleted: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
-        server_default="false",
+        server_default=false(),
     )
 
     entry: Mapped["Entry"] = relationship(back_populates="transactions")

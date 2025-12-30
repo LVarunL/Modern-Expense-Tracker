@@ -107,6 +107,9 @@ class ConfirmResponse(APIModel):
 class TransactionsResponse(APIModel):
     items: list[TransactionOut]
     count: int
+    total_count: int
+    limit: int
+    offset: int
 
 
 class CategorySummary(APIModel):
@@ -121,6 +124,7 @@ class SummaryResponse(APIModel):
     total_outflow: Decimal
     net: Decimal
     by_category: list[CategorySummary]
+    transaction_count: int
 
 
 def month_range(month: str) -> tuple[datetime, datetime]:
