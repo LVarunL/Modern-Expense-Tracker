@@ -3,11 +3,13 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 
 from src.models.entry import Entry
 from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.models.transaction import Transaction
+from src.parser.service import ParserError, get_parser
 from src.services import EntryCreate, TransactionCreate, create_entry, create_transactions
 
 
@@ -32,12 +34,26 @@ async def test_parse_creates_entry(client, db_session) -> None:
     assert entry.raw_text == payload["raw_text"]
     assert entry.status == EntryStatus.pending_confirmation
     assert entry.parser_output_json is not None
-    assert entry.parser_output_json["needs_confirmation"] is True
+    assert entry.parser_output_json["post_processed"]["needs_confirmation"] is True
 
 
 async def test_parse_requires_text(client) -> None:
     response = await client.post("/v1/parse", json={"raw_text": ""})
     assert response.status_code == 422
+
+
+async def test_parse_handles_parser_failure(app) -> None:
+    class ErrorParser:
+        async def parse(self, *, raw_text: str, occurred_at_hint, reference_datetime, timezone):
+            raise ParserError("boom")
+
+    app.dependency_overrides[get_parser] = lambda: ErrorParser()
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as error_client:
+        response = await error_client.post("/v1/parse", json={"raw_text": "Test"})
+        assert response.status_code == 502
 
 
 async def test_confirm_creates_transactions(client, db_session) -> None:

@@ -21,6 +21,8 @@ class APIModel(BaseModel):
 class ParseRequest(APIModel):
     raw_text: str = Field(min_length=1)
     occurred_at_hint: datetime | None = None
+    reference_datetime: datetime | None = None
+    timezone: str | None = None
 
 
 class ParseTransaction(APIModel):

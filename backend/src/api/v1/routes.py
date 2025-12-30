@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
@@ -31,6 +32,7 @@ from src.api.v1.examples import (
     SUMMARY_RESPONSE_EXAMPLES,
     TRANSACTIONS_RESPONSE_EXAMPLES,
 )
+from src.parser.service import LLMParser, ParserError, get_parser
 from src.api.v1.schemas import (
     CategorySummary,
     ConfirmRequest,
@@ -66,12 +68,37 @@ def health_check() -> dict[str, str]:
 async def parse_text(
     payload: ParseRequest = Body(..., examples=PARSE_REQUEST_EXAMPLES),
     session: AsyncSession = Depends(get_session),
+    parser: LLMParser = Depends(get_parser),
 ) -> ParseResponse:
     settings = get_settings()
-    preview = ParsePreview(
-        occurred_at=payload.occurred_at_hint,
-        needs_confirmation=True,
-    )
+    timezone_name = payload.timezone or settings.parser_timezone
+    try:
+        tzinfo = ZoneInfo(timezone_name)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid timezone value.",
+        ) from exc
+    reference_datetime = payload.reference_datetime
+    if reference_datetime is None:
+        reference_datetime = datetime.now(tzinfo)
+    elif reference_datetime.tzinfo is None:
+        reference_datetime = reference_datetime.replace(tzinfo=tzinfo)
+    try:
+        result = await parser.parse(
+            raw_text=payload.raw_text,
+            occurred_at_hint=payload.occurred_at_hint,
+            reference_datetime=reference_datetime,
+            timezone=timezone_name,
+        )
+    except ParserError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+    preview = ParsePreview.model_validate(result.preview)
+    preview_json = preview.model_dump(mode="json")
     entry = await create_entry(
         session,
         entry=EntryCreate(
@@ -79,8 +106,11 @@ async def parse_text(
             raw_text=payload.raw_text,
             occurred_at_hint=payload.occurred_at_hint,
             status=EntryStatus.pending_confirmation,
-            parser_output_json=preview.model_dump(mode="json"),
-            parser_version="mock-v0",
+            parser_output_json={
+                "raw_output": result.raw_output,
+                "post_processed": preview_json,
+            },
+            parser_version=result.parser_version,
         ),
     )
     return ParseResponse(
