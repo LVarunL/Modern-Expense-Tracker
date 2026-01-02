@@ -22,7 +22,6 @@ Set these in `backend/.env` (see `.env.example`):
 - `LLM_TIMEOUT_SECONDS`
 - `LLM_TEMPERATURE`
 - `PARSER_VERSION`
-- `PARSER_TIMEZONE` (default `Asia/Kolkata`)
 
 Gemini example:
 
@@ -41,7 +40,7 @@ To improve parse quality, keep prompts explicit and consistent:
 - If splitting a bill, specify the number of people when possible (e.g., "split among 3 friends").
 - If a split is mentioned without a count, the parser assumes 2 people (50/50) and marks the result for confirmation.
 - Mention the date/time if it matters; otherwise the parser may omit `occurred_at`.
-- Relative dates (today/yesterday) are resolved using a server-side reference time in `Asia/Kolkata` unless you pass a `timezone`.
+- Relative dates (today/yesterday) are resolved using a server-side reference time in `Asia/Kolkata`.
 
 ## Run tests
 

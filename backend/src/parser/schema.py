@@ -14,7 +14,6 @@ class LLMTransaction(BaseModel):
     category: str
     subcategory: str | None = None
     merchant: str | None = None
-    confidence: float = 0.0
     needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
 
@@ -25,7 +24,6 @@ class LLMParseOutput(BaseModel):
     entry_summary: str | None = None
     occurred_at: datetime | None = None
     transactions: list[LLMTransaction] = Field(default_factory=list)
-    overall_confidence: float = 0.0
     needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
     follow_up_question: str | None = None

@@ -28,7 +28,6 @@ async def create_transactions(
             category=item.category,
             subcategory=item.subcategory,
             merchant=item.merchant,
-            confidence=item.confidence,
             needs_confirmation=item.needs_confirmation,
             assumptions_json=item.assumptions_json,
         )

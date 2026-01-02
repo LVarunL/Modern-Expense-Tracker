@@ -71,14 +71,7 @@ async def parse_text(
     parser: LLMParser = Depends(get_parser),
 ) -> ParseResponse:
     settings = get_settings()
-    timezone_name = payload.timezone or settings.parser_timezone
-    try:
-        tzinfo = ZoneInfo(timezone_name)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid timezone value.",
-        ) from exc
+    tzinfo = ZoneInfo("Asia/Kolkata")
     reference_datetime = payload.reference_datetime
     if reference_datetime is None:
         reference_datetime = datetime.now(tzinfo)
@@ -89,7 +82,6 @@ async def parse_text(
             raw_text=payload.raw_text,
             occurred_at_hint=payload.occurred_at_hint,
             reference_datetime=reference_datetime,
-            timezone=timezone_name,
         )
     except ParserError as exc:
         raise HTTPException(
@@ -155,7 +147,6 @@ async def confirm_entry(
                 category=item.category,
                 subcategory=item.subcategory,
                 merchant=item.merchant,
-                confidence=item.confidence,
                 needs_confirmation=item.needs_confirmation,
                 assumptions_json=item.assumptions,
             )

@@ -57,7 +57,6 @@ class LLMParser:
         raw_text: str,
         occurred_at_hint: datetime | None,
         reference_datetime: datetime,
-        timezone: str,
     ) -> ParsedResult:
         hint = occurred_at_hint.isoformat() if occurred_at_hint else None
         try:
@@ -65,7 +64,6 @@ class LLMParser:
                 raw_text=raw_text,
                 occurred_at_hint=hint,
                 reference_datetime=reference_datetime.isoformat(),
-                timezone=timezone,
             )
         except LLMClientError as exc:
             raise ParserError(str(exc)) from exc

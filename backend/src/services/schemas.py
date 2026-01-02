@@ -33,6 +33,5 @@ class TransactionCreate:
     category: str
     subcategory: str | None = None
     merchant: str | None = None
-    confidence: float = 0.0
     needs_confirmation: bool = False
     assumptions_json: dict[str, Any] | list[str] | None = None

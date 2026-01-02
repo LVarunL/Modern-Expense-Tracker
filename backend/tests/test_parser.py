@@ -3,8 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 
-import pytest
-
 from src.models.enums import TransactionDirection, TransactionType
 from src.parser.postprocess import post_process
 from src.parser.schema import LLMParseOutput, LLMTransaction
@@ -21,12 +19,10 @@ def test_post_process_amount_rules() -> None:
                 direction="outflow",
                 type="expense",
                 category="Food & Drinks",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -50,12 +46,10 @@ def test_post_process_direction_and_type() -> None:
                 direction="inflow",
                 type="expense",
                 category="Food & Drinks",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -79,12 +73,10 @@ def test_post_process_invalid_direction_defaults() -> None:
                 direction="sideways",
                 type="expense",
                 category="Food & Drinks",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -107,12 +99,10 @@ def test_post_process_invalid_category() -> None:
                 direction="outflow",
                 type="expense",
                 category="MadeUp",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -135,12 +125,10 @@ def test_post_process_split_handling() -> None:
                 direction="outflow",
                 type="expense",
                 category="Food & Drinks",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -163,12 +151,10 @@ def test_post_process_split_with_count() -> None:
                 direction="outflow",
                 type="expense",
                 category="Food & Drinks",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -191,12 +177,10 @@ def test_post_process_type_unrecognized() -> None:
                 direction="outflow",
                 type="random",
                 category="Food & Drinks",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -219,12 +203,10 @@ def test_post_process_large_amount_flags_confirmation() -> None:
                 direction="outflow",
                 type="expense",
                 category="Shopping",
-                confidence=0.9,
                 needs_confirmation=False,
                 assumptions=[],
             )
         ],
-        overall_confidence=0.9,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,
@@ -236,49 +218,12 @@ def test_post_process_large_amount_flags_confirmation() -> None:
     assert "Amount is unusually large; please confirm." in transaction["assumptions"]
 
 
-def test_post_process_overall_confidence() -> None:
-    parsed = LLMParseOutput(
-        entry_summary=None,
-        occurred_at=None,
-        transactions=[
-            LLMTransaction(
-                amount=100,
-                currency="INR",
-                direction="outflow",
-                type="expense",
-                category="Food & Drinks",
-                confidence=0.2,
-                needs_confirmation=False,
-                assumptions=[],
-            ),
-            LLMTransaction(
-                amount=200,
-                currency="INR",
-                direction="outflow",
-                type="expense",
-                category="Transport",
-                confidence=0.6,
-                needs_confirmation=False,
-                assumptions=[],
-            ),
-        ],
-        overall_confidence=0.9,
-        needs_confirmation=False,
-        assumptions=[],
-        follow_up_question=None,
-    )
-
-    result = post_process(parsed, raw_text="Transit")
-    assert result["overall_confidence"] == pytest.approx(0.4)
-
-
 def test_post_process_keeps_occurred_at() -> None:
     when = datetime(2025, 1, 1, tzinfo=timezone.utc)
     parsed = LLMParseOutput(
         entry_summary=None,
         occurred_at=when,
         transactions=[],
-        overall_confidence=0.0,
         needs_confirmation=False,
         assumptions=[],
         follow_up_question=None,

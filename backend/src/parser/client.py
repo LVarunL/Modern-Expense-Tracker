@@ -35,7 +35,6 @@ class OpenAIChatClient:
         raw_text: str,
         occurred_at_hint: str | None,
         reference_datetime: str,
-        timezone: str,
     ) -> list[dict[str, str]]:
         system_message = build_system_message()
         messages: list[dict[str, str]] = [{"role": "system", "content": system_message}]
@@ -49,7 +48,6 @@ class OpenAIChatClient:
                 "role": "user",
                 "content": (
                     f"reference_datetime: {reference_datetime}\n"
-                    f"timezone: {timezone}\n"
                     f"text: {raw_text}\n"
                     f"{hint_line}"
                 ),
@@ -63,9 +61,8 @@ class OpenAIChatClient:
         raw_text: str,
         occurred_at_hint: str | None,
         reference_datetime: str,
-        timezone: str,
     ) -> dict[str, Any]:
-        messages = self._build_messages(raw_text, occurred_at_hint, reference_datetime, timezone)
+        messages = self._build_messages(raw_text, occurred_at_hint, reference_datetime)
         payload = {
             "model": self._model,
             "messages": messages,
@@ -113,7 +110,6 @@ class GeminiClient:
         raw_text: str,
         occurred_at_hint: str | None,
         reference_datetime: str,
-        timezone: str,
     ) -> list[dict[str, object]]:
         contents: list[dict[str, Any]] = []
         for example in FEW_SHOT_EXAMPLES:
@@ -128,7 +124,6 @@ class GeminiClient:
                     {
                         "text": (
                             f"reference_datetime: {reference_datetime}\n"
-                            f"timezone: {timezone}\n"
                             f"text: {raw_text}\n"
                             f"{hint_line}"
                         )
@@ -144,9 +139,8 @@ class GeminiClient:
         raw_text: str,
         occurred_at_hint: str | None,
         reference_datetime: str,
-        timezone: str,
     ) -> dict[str, Any]:
-        contents = self._build_contents(raw_text, occurred_at_hint, reference_datetime, timezone)
+        contents = self._build_contents(raw_text, occurred_at_hint, reference_datetime)
         payload = {
             "contents": contents,
             "systemInstruction": {"parts": [{"text": build_system_message()}]},

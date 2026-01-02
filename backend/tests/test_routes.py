@@ -44,7 +44,7 @@ async def test_parse_requires_text(client) -> None:
 
 async def test_parse_handles_parser_failure(app) -> None:
     class ErrorParser:
-        async def parse(self, *, raw_text: str, occurred_at_hint, reference_datetime, timezone):
+        async def parse(self, *, raw_text: str, occurred_at_hint, reference_datetime):
             raise ParserError("boom")
 
     app.dependency_overrides[get_parser] = lambda: ErrorParser()
@@ -73,7 +73,6 @@ async def test_confirm_creates_transactions(client, db_session) -> None:
                 "category": "Food & Drinks",
                 "subcategory": "Dining",
                 "merchant": "Cafe",
-                "confidence": 0.9,
                 "needs_confirmation": False,
                 "assumptions": [],
             }
@@ -112,7 +111,6 @@ async def test_confirm_replaces_transactions(client, db_session) -> None:
                 "category": "Food & Drinks",
                 "subcategory": None,
                 "merchant": None,
-                "confidence": 0.7,
                 "needs_confirmation": False,
                 "assumptions": [],
             }
@@ -131,7 +129,6 @@ async def test_confirm_replaces_transactions(client, db_session) -> None:
                 "category": "Food & Drinks",
                 "subcategory": None,
                 "merchant": None,
-                "confidence": 0.8,
                 "needs_confirmation": False,
                 "assumptions": [],
             }
@@ -170,7 +167,6 @@ async def test_confirm_missing_entry(client) -> None:
                 "category": "Food & Drinks",
                 "subcategory": "Dining",
                 "merchant": "Cafe",
-                "confidence": 0.9,
                 "needs_confirmation": False,
                 "assumptions": [],
             }

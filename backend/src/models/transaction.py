@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, JSON, Numeric, String, false
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, JSON, Numeric, String, false
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -45,11 +45,6 @@ class Transaction(Base):
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     subcategory: Mapped[str | None] = mapped_column(String(50), nullable=True)
     merchant: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    confidence: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        server_default="0",
-    )
     needs_confirmation: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

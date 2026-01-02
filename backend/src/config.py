@@ -19,7 +19,6 @@ class Settings:
     llm_temperature: float
     parser_version: str
     llm_provider: str
-    parser_timezone: str
 
 
 @lru_cache
@@ -46,7 +45,6 @@ def get_settings() -> Settings:
     llm_timeout_seconds = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
     llm_temperature = float(os.getenv("LLM_TEMPERATURE", "0.2"))
     parser_version = os.getenv("PARSER_VERSION", "poc-v1")
-    parser_timezone = os.getenv("PARSER_TIMEZONE", "Asia/Kolkata")
     return Settings(
         database_url=database_url,
         environment=environment,
@@ -58,5 +56,4 @@ def get_settings() -> Settings:
         llm_temperature=llm_temperature,
         parser_version=parser_version,
         llm_provider=llm_provider,
-        parser_timezone=parser_timezone,
     )

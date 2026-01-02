@@ -22,7 +22,6 @@ class ParseRequest(APIModel):
     raw_text: str = Field(min_length=1)
     occurred_at_hint: datetime | None = None
     reference_datetime: datetime | None = None
-    timezone: str | None = None
 
 
 class ParseTransaction(APIModel):
@@ -33,7 +32,6 @@ class ParseTransaction(APIModel):
     category: str
     subcategory: str | None = None
     merchant: str | None = None
-    confidence: float = 0.0
     needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
 
@@ -42,7 +40,6 @@ class ParsePreview(APIModel):
     entry_summary: str | None = None
     occurred_at: datetime | None = None
     transactions: list[ParseTransaction] = Field(default_factory=list)
-    overall_confidence: float = 0.0
     needs_confirmation: bool = True
     assumptions: list[str] = Field(default_factory=list)
     follow_up_question: str | None = None
@@ -62,7 +59,6 @@ class TransactionInput(APIModel):
     category: str
     subcategory: str | None = None
     merchant: str | None = None
-    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
 
@@ -96,7 +92,6 @@ class TransactionOut(APIModel):
     category: str
     subcategory: str | None
     merchant: str | None
-    confidence: float
     needs_confirmation: bool
     assumptions_json: Any | None
 
