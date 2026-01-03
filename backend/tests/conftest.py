@@ -12,7 +12,7 @@ from decimal import Decimal
 from src.config import get_settings
 from src.models.base import Base
 from src.models.enums import TransactionDirection, TransactionType
-from src.parser.service import ParsedResult
+from src.parser.service import ParsedResult, get_parser
 
 
 
@@ -60,7 +60,7 @@ async def app(session_maker: async_sessionmaker[AsyncSession]):
             yield session
 
     class FakeParser:
-        async def parse(self, *, raw_text: str, occurred_at_hint):
+        async def parse(self, *, raw_text: str, occurred_at_hint, reference_datetime):
             preview = {
                 "entry_summary": f"Parsed: {raw_text}",
                 "occurred_at": occurred_at_hint,
