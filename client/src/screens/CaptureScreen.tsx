@@ -1,38 +1,45 @@
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMemo, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMemo, useState } from "react";
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-import { getErrorMessage, parseEntry } from '../api';
-import { InputField } from '../components/InputField';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { Screen } from '../components/Screen';
-import { mockParsedTransactions } from '../data/mock';
-import type { ParseResponse } from '../api/types';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { useEntranceAnimation } from '../utils/animations';
-import type { RootStackParamList } from '../navigation/types';
+import { getErrorMessage, parseEntry } from "../api";
+import type { ParseResponse } from "../api/types";
+import { InputField } from "../components/InputField";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { Screen } from "../components/Screen";
+import type { RootStackParamList } from "../navigation/types";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
+import { useEntranceAnimation } from "../utils/animations";
 
 const promptSuggestions = [
-  'Dinner 600 and dessert 200, movie 350',
-  'Split dinner 1200 with a friend',
-  'Salary credited 52000',
-  'Uber 320 to office',
+  "Dinner 600 and dessert 200, movie 350",
+  "Split dinner 1200 with a friend",
+  "Salary credited 52000",
+  "Uber 320 to office",
 ];
 
 export function CaptureScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [text, setText] = useState('');
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [text, setText] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [lastPreview, setLastPreview] = useState<ParseResponse | null>(null);
   const animation = useEntranceAnimation(18);
 
   const previewItems = useMemo(
-    () => (lastPreview ? lastPreview.transactions.slice(0, 2) : mockParsedTransactions.slice(0, 2)),
-    [lastPreview],
+    () => (lastPreview ? lastPreview.transactions.slice(0, 2) : []),
+    [lastPreview]
   );
 
   const handlePreview = async () => {
@@ -47,11 +54,11 @@ export function CaptureScreen() {
     try {
       const preview = await parseEntry({ raw_text: trimmed });
       setLastPreview(preview);
-      if (preview.status === 'confirmed') {
-        setText('');
+      if (preview.status === "confirmed") {
+        setText("");
         return;
       }
-      navigation.navigate('PreviewModal', {
+      navigation.navigate("PreviewModal", {
         preview,
         rawText: trimmed,
       });
@@ -64,7 +71,10 @@ export function CaptureScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Capture</Text>
           <Text style={styles.subtitle}>
@@ -84,7 +94,10 @@ export function CaptureScreen() {
             <Pressable
               key={suggestion}
               onPress={() => setText(suggestion)}
-              style={({ pressed }) => [styles.suggestion, pressed && styles.suggestionPressed]}
+              style={({ pressed }) => [
+                styles.suggestion,
+                pressed && styles.suggestionPressed,
+              ]}
             >
               <Text style={styles.suggestionText}>{suggestion}</Text>
             </Pressable>
@@ -92,7 +105,7 @@ export function CaptureScreen() {
         </View>
 
         <PrimaryButton
-          label={isParsing ? 'Parsing...' : 'Preview parsed transactions'}
+          label={isParsing ? "Parsing..." : "Preview parsed transactions"}
           suffix="Preview"
           onPress={handlePreview}
           disabled={!text.trim() || isParsing}
@@ -109,16 +122,19 @@ export function CaptureScreen() {
           ]}
         >
           <Text style={styles.previewTitle}>
-            {lastPreview?.status === 'confirmed' ? 'Logged' : 'Recent preview'}
+            {lastPreview?.status === "confirmed" ? "Logged" : "Recent preview"}
           </Text>
           <Text style={styles.previewSubtitle}>
             {lastPreview?.entry_summary
               ? `Parsed: ${lastPreview.entry_summary}`
-              : 'Parsed from: “Dinner 600…”'}
+              : "Parsed from: “Dinner 600…”"}
           </Text>
           {lastPreview
             ? lastPreview.transactions.slice(0, 2).map((item, index) => (
-                <View key={`${item.category}-${index}`} style={styles.previewRow}>
+                <View
+                  key={`${item.category}-${index}`}
+                  style={styles.previewRow}
+                >
                   <Text style={styles.previewRowLabel}>{item.category}</Text>
                   <Text style={styles.previewRowAmount}>₹{item.amount}</Text>
                 </View>
@@ -156,8 +172,8 @@ const styles = StyleSheet.create({
     lineHeight: typography.lineHeight.relaxed,
   },
   suggestionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   suggestion: {
@@ -169,7 +185,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   suggestionPressed: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: "#EEF2FF",
   },
   suggestionText: {
     fontFamily: typography.fontFamily.medium,
@@ -195,8 +211,8 @@ const styles = StyleSheet.create({
     color: colors.slate,
   },
   previewRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   previewRowLabel: {
     fontFamily: typography.fontFamily.medium,

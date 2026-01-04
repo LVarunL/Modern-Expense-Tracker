@@ -9,7 +9,7 @@ from src.models.enums import TransactionDirection, TransactionType
 from src.parser.prompts import ALLOWED_CATEGORIES, ALLOWED_TYPES
 from src.parser.schema import LLMParseOutput, LLMTransaction
 
-LARGE_AMOUNT_THRESHOLD = Decimal("1000000")
+LARGE_AMOUNT_THRESHOLD = Decimal("10000")
 
 TYPE_DIRECTION_MAP: dict[TransactionType, TransactionDirection] = {
     TransactionType.expense: TransactionDirection.outflow,
