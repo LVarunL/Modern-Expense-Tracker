@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, JSON, Numeric, String, false
+from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,6 +29,17 @@ class Transaction(Base):
         nullable=False,
         index=True,
     )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(
         String(3),
@@ -43,13 +55,6 @@ class Transaction(Base):
         nullable=False,
     )
     category: Mapped[str] = mapped_column(String(50), nullable=False)
-    subcategory: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    merchant: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    needs_confirmation: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        server_default=false(),
-    )
     assumptions_json: Mapped[dict[str, Any] | list[str] | None] = mapped_column(
         JSON().with_variant(JSONB, "postgresql"),
         nullable=True,

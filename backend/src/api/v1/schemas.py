@@ -14,13 +14,13 @@ from src.models.enums import EntrySource, EntryStatus, TransactionDirection, Tra
 class APIModel(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
+        populate_by_name=True,
         json_encoders={Decimal: lambda value: float(value)},
     )
 
 
 class ParseRequest(APIModel):
     raw_text: str = Field(min_length=1)
-    occurred_at_hint: datetime | None = None
     reference_datetime: datetime | None = None
 
 
@@ -30,19 +30,14 @@ class ParseTransaction(APIModel):
     direction: TransactionDirection
     type: TransactionType
     category: str
-    subcategory: str | None = None
-    merchant: str | None = None
-    needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
 
 
 class ParsePreview(APIModel):
     entry_summary: str | None = None
-    occurred_at: datetime | None = None
+    occurred_time: datetime | None = Field(default=None, validation_alias="occurred_at")
     transactions: list[ParseTransaction] = Field(default_factory=list)
-    needs_confirmation: bool = True
     assumptions: list[str] = Field(default_factory=list)
-    follow_up_question: str | None = None
 
 
 class ParseResponse(ParsePreview):
@@ -51,15 +46,12 @@ class ParseResponse(ParsePreview):
 
 
 class TransactionInput(APIModel):
-    occurred_at: datetime
+    occurred_time: datetime = Field(validation_alias="occurred_at")
     amount: Decimal = Field(gt=0)
     currency: str = "INR"
     direction: TransactionDirection
     type: TransactionType
     category: str
-    subcategory: str | None = None
-    merchant: str | None = None
-    needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
 
 
@@ -70,29 +62,26 @@ class ConfirmRequest(APIModel):
 
 class EntryOut(APIModel):
     id: int
-    user_id: str
     raw_text: str
     source: EntrySource
-    created_at: datetime
-    occurred_at_hint: datetime | None
+    created_time: datetime = Field(validation_alias="created_at")
+    modified_time: datetime = Field(validation_alias="updated_at")
     parser_output_json: dict[str, Any] | None
     parser_version: str | None
-    status: EntryStatus
     notes: str | None
 
 
 class TransactionOut(APIModel):
     id: int
     entry_id: int
-    occurred_at: datetime
+    occurred_time: datetime = Field(validation_alias="occurred_at")
+    created_time: datetime = Field(validation_alias="created_at")
+    modified_time: datetime = Field(validation_alias="updated_at")
     amount: Decimal
     currency: str
     direction: TransactionDirection
     type: TransactionType
     category: str
-    subcategory: str | None
-    merchant: str | None
-    needs_confirmation: bool
     assumptions_json: Any | None
 
 
@@ -103,7 +92,6 @@ class ConfirmResponse(APIModel):
 
 class TransactionsResponse(APIModel):
     items: list[TransactionOut]
-    count: int
     total_count: int
     limit: int
     offset: int

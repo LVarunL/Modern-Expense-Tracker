@@ -49,15 +49,12 @@ SCHEMA_SKELETON = {
             "direction": "outflow",
             "type": "expense",
             "category": "Other",
-            "subcategory": None,
-            "merchant": None,
             "needs_confirmation": False,
             "assumptions": [],
         }
     ],
-    "needs_confirmation": False, 
+    "needs_confirmation": False,
     "assumptions": [],
-    "follow_up_question": None,
 }
 
 SYSTEM_RULES = [
@@ -74,13 +71,11 @@ SYSTEM_RULES = [
     "If type='investment_income' => category='Investments'.",
     "If type in ('repayment_received','repayment_sent') => category='Loans'.",
     "If type='transfer' => category='Transfer'.",
-    "Merchant must be set only if explicitly mentioned; otherwise null.",
     "If multiple distinct spends/incomes with different amounts, output multiple transactions.",
     "If multiple amounts refer to one total, output one transaction and add an assumption.",
     "Parse amounts like '1,300', '₹1300', '1300 rs', 'rs 1300'.",
     "Parse suffixes like '1.2k' => 1200 and '85k' => 85000.",
     "Do not invent or round amounts unless text says 'approx/around'; then add assumption and confirmation.",
-    "If occurred_at_hint is provided, you may use it for occurred_at when it is consistent.",
     "Use reference_datetime to resolve relative dates like 'yesterday' or 'today'.",
     "If relative date is used but reference_datetime missing, set occurred_at=null and add an assumption.",
     "If no date/time is specified, occurred_at must be null.",
@@ -90,10 +85,7 @@ SYSTEM_RULES = [
     "If an assumption affects money/type/category/share, set needs_confirmation=true for that transaction.",
     "Top-level assumptions must include all transaction assumptions.",
     "If there are no transactions, use top-level assumptions for missing info (e.g., amount missing).",
-    "Top-level needs_confirmation is true if any transaction needs confirmation or follow_up_question is not null.",
-    "Set follow_up_question (single short question) when amount is missing,",
-    "split is mentioned but user share is unknown and not inferable,",
-    "direction is genuinely unclear, or amounts cannot be mapped to items.",
+    "Top-level needs_confirmation is true if any transaction needs confirmation.",
 ]
 
 
@@ -107,7 +99,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Paid rent 18000 on 2025-01-03."
         ),
         "output": json.dumps(
@@ -121,15 +112,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Rent",
-                        "subcategory": None,
-                        "merchant": None,
                         "needs_confirmation": False,
                         "assumptions": ["Time not specified; defaulted to start of day."],
                     }
                 ],
                 "needs_confirmation": False,
                 "assumptions": ["Time not specified; defaulted to start of day."],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -137,7 +125,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Salary credited 52000."
         ),
         "output": json.dumps(
@@ -151,15 +138,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "inflow",
                         "type": "income",
                         "category": "Income",
-                        "subcategory": None,
-                        "merchant": None,
                         "needs_confirmation": False,
                         "assumptions": [],
                     }
                 ],
                 "needs_confirmation": False,
                 "assumptions": [],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -167,7 +151,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Dinner 600 and dessert 200, movie 350 yesterday."
         ),
         "output": json.dumps(
@@ -181,8 +164,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Food & Drinks",
-                        "subcategory": "Dining",
-                        "merchant": None,
                         "needs_confirmation": False,
                         "assumptions": ["Time not specified; defaulted to start of day."],
                     },
@@ -192,8 +173,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Food & Drinks",
-                        "subcategory": "Dessert",
-                        "merchant": None,
                         "needs_confirmation": False,
                         "assumptions": ["Time not specified; defaulted to start of day."],
                     },
@@ -203,15 +182,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Entertainment",
-                        "subcategory": "Movies",
-                        "merchant": None,
                         "needs_confirmation": False,
                         "assumptions": ["Time not specified; defaulted to start of day."],
                     },
                 ],
                 "needs_confirmation": False,
                 "assumptions": ["Time not specified; defaulted to start of day."],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -219,7 +195,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Paid back Rohan 1200 for the trip."
         ),
         "output": json.dumps(
@@ -233,15 +208,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "repayment_sent",
                         "category": "Loans",
-                        "subcategory": None,
-                        "merchant": "Rohan",
                         "needs_confirmation": False,
                         "assumptions": [],
                     }
                 ],
                 "needs_confirmation": False,
                 "assumptions": [],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -249,7 +221,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Netflix subscription 649 with taxes."
         ),
         "output": json.dumps(
@@ -263,15 +234,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Subscriptions",
-                        "subcategory": None,
-                        "merchant": "Netflix",
                         "needs_confirmation": True,
                         "assumptions": ["Assumed 649 is the total including taxes."],
                     }
                 ],
                 "needs_confirmation": True,
                 "assumptions": ["Assumed 649 is the total including taxes."],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -279,7 +247,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Rohan paid me back 1500 for last week."
         ),
         "output": json.dumps(
@@ -293,15 +260,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "inflow",
                         "type": "repayment_received",
                         "category": "Loans",
-                        "subcategory": None,
-                        "merchant": "Rohan",
                         "needs_confirmation": False,
                         "assumptions": ["Timing unclear ('last week'); occurred_at not set."],
                     }
                 ],
                 "needs_confirmation": False,
                 "assumptions": ["Timing unclear ('last week'); occurred_at not set."],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -309,7 +273,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Split dinner 1200 with a friend."
         ),
         "output": json.dumps(
@@ -323,15 +286,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Food & Drinks",
-                        "subcategory": "Dining",
-                        "merchant": None,
                         "needs_confirmation": True,
                         "assumptions": ["Split assumed 2 people."],
                     }
                 ],
                 "needs_confirmation": True,
                 "assumptions": ["Split assumed 2 people."],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -339,7 +299,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Bought groceries today."
         ),
         "output": json.dumps(
@@ -349,7 +308,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                 "transactions": [],
                 "needs_confirmation": True,
                 "assumptions": ["Amount not provided."],
-                "follow_up_question": "How much did you spend on groceries?",
             },
             ensure_ascii=True,
         ),
@@ -357,7 +315,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Got dividend from TCS worth 420 rs."
         ),
         "output": json.dumps(
@@ -371,15 +328,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "inflow",
                         "type": "investment_income",
                         "category": "Investments",
-                        "subcategory": "Dividend",
-                        "merchant": "TCS",
                         "needs_confirmation": False,
                         "assumptions": [],
                     }
                 ],
                 "needs_confirmation": False,
                 "assumptions": [],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -387,7 +341,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Google autopay debited 180 for YouTube Premium."
         ),
         "output": json.dumps(
@@ -401,15 +354,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Subscriptions",
-                        "subcategory": None,
-                        "merchant": "YouTube Premium",
                         "needs_confirmation": False,
                         "assumptions": [],
                     }
                 ],
                 "needs_confirmation": False,
                 "assumptions": [],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -417,7 +367,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Lunch cost around 1300 rs."
         ),
         "output": json.dumps(
@@ -431,15 +380,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Food & Drinks",
-                        "subcategory": "Dining",
-                        "merchant": None,
                         "needs_confirmation": True,
                         "assumptions": ["Amount is approximate ('around')."],
                     }
                 ],
                 "needs_confirmation": True,
                 "assumptions": ["Amount is approximate ('around')."],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),
@@ -447,7 +393,6 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
     {
         "input": (
             "reference_datetime: 2025-01-10T12:00:00+05:30\n"
-            "timezone: Asia/Kolkata\n"
             "text: Split dinner 1200 with 3 friends."
         ),
         "output": json.dumps(
@@ -461,15 +406,12 @@ FEW_SHOT_EXAMPLES: list[dict[str, str]] = [
                         "direction": "outflow",
                         "type": "expense",
                         "category": "Food & Drinks",
-                        "subcategory": "Dining",
-                        "merchant": None,
                         "needs_confirmation": False,
                         "assumptions": [],
                     }
                 ],
                 "needs_confirmation": False,
                 "assumptions": [],
-                "follow_up_question": None,
             },
             ensure_ascii=True,
         ),

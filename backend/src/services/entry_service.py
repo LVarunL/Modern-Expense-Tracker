@@ -20,7 +20,6 @@ async def create_entry(
         user_id=entry.user_id,
         raw_text=entry.raw_text,
         source=entry.source,
-        occurred_at_hint=entry.occurred_at_hint,
         parser_output_json=entry.parser_output_json,
         parser_version=entry.parser_version,
         status=entry.status,

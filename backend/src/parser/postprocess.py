@@ -82,7 +82,7 @@ def _apply_amount_rules(
 
 def post_process(parsed: LLMParseOutput, raw_text: str) -> dict[str, object]:
     entry_assumptions: list[str] = []
-    entry_needs_confirmation = parsed.needs_confirmation or parsed.follow_up_question is not None
+    entry_needs_confirmation = parsed.needs_confirmation
     split_count = _detect_split_count(raw_text)
 
     processed_transactions: list[dict[str, object]] = []
@@ -98,6 +98,7 @@ def post_process(parsed: LLMParseOutput, raw_text: str) -> dict[str, object]:
 
     if not processed_transactions:
         entry_assumptions = list(parsed.assumptions)
+        entry_needs_confirmation = True
 
     return {
         "entry_summary": parsed.entry_summary,
@@ -105,7 +106,6 @@ def post_process(parsed: LLMParseOutput, raw_text: str) -> dict[str, object]:
         "transactions": processed_transactions,
         "needs_confirmation": entry_needs_confirmation,
         "assumptions": entry_assumptions,
-        "follow_up_question": parsed.follow_up_question,
     }
 
 
@@ -159,8 +159,6 @@ def _process_transaction(
         "direction": direction,
         "type": transaction_type,
         "category": category,
-        "subcategory": tx.subcategory,
-        "merchant": tx.merchant,
         "needs_confirmation": needs_confirmation,
         "assumptions": assumptions,
     }

@@ -60,10 +60,10 @@ async def app(session_maker: async_sessionmaker[AsyncSession]):
             yield session
 
     class FakeParser:
-        async def parse(self, *, raw_text: str, occurred_at_hint, reference_datetime):
+        async def parse(self, *, raw_text: str, reference_datetime):
             preview = {
                 "entry_summary": f"Parsed: {raw_text}",
-                "occurred_at": occurred_at_hint,
+                "occurred_at": reference_datetime,
                 "transactions": [
                     {
                         "amount": Decimal("100.00"),
@@ -71,15 +71,12 @@ async def app(session_maker: async_sessionmaker[AsyncSession]):
                         "direction": TransactionDirection.outflow,
                         "type": TransactionType.expense,
                         "category": "Food & Drinks",
-                        "subcategory": None,
-                        "merchant": None,
                         "needs_confirmation": True,
                         "assumptions": [],
                     }
                 ],
                 "needs_confirmation": True,
                 "assumptions": [],
-                "follow_up_question": None,
             }
             return ParsedResult(
                 preview=preview,

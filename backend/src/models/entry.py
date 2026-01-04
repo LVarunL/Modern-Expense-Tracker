@@ -29,9 +29,11 @@ class Entry(Base):
         server_default=func.now(),
         nullable=False,
     )
-    occurred_at_hint: Mapped[datetime | None] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=True,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
     parser_output_json: Mapped[dict[str, Any] | None] = mapped_column(
         JSON().with_variant(JSONB, "postgresql"),

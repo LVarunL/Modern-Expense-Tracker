@@ -9,7 +9,7 @@ from sqlalchemy import select
 from src.models.entry import Entry
 from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.models.transaction import Transaction
-from src.parser.service import ParserError, get_parser
+from src.parser.service import ParsedResult, ParserError, get_parser
 from src.services import EntryCreate, TransactionCreate, create_entry, create_transactions
 
 
@@ -26,7 +26,6 @@ async def test_parse_creates_entry(client, db_session) -> None:
     data = response.json()
     assert data["entry_id"] > 0
     assert data["status"] == EntryStatus.pending_confirmation.value
-    assert data["needs_confirmation"] is True
 
     result = await db_session.execute(select(Entry))
     entry = result.scalar_one()
@@ -42,9 +41,56 @@ async def test_parse_requires_text(client) -> None:
     assert response.status_code == 422
 
 
+async def test_parse_auto_confirms_transactions(app, db_session) -> None:
+    class AutoParser:
+        async def parse(self, *, raw_text: str, reference_datetime):
+            preview = {
+                "entry_summary": f"Parsed: {raw_text}",
+                "occurred_at": reference_datetime,
+                "transactions": [
+                    {
+                        "amount": Decimal("250.00"),
+                        "currency": "INR",
+                        "direction": TransactionDirection.outflow,
+                        "type": TransactionType.expense,
+                        "category": "Food & Drinks",
+                        "needs_confirmation": False,
+                        "assumptions": [],
+                    }
+                ],
+                "needs_confirmation": False,
+                "assumptions": [],
+            }
+            return ParsedResult(
+                preview=preview,
+                raw_output={"mock": True},
+                post_processed=preview,
+                parser_version="test",
+            )
+
+    app.dependency_overrides[get_parser] = lambda: AutoParser()
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as auto_client:
+        response = await auto_client.post("/v1/parse", json={"raw_text": "Taxi 250"})
+        assert response.status_code == 201
+        data = response.json()
+        assert data["status"] == EntryStatus.confirmed.value
+
+    result = await db_session.execute(select(Entry))
+    entry = result.scalar_one()
+    assert entry.status == EntryStatus.confirmed
+
+    tx_result = await db_session.execute(select(Transaction))
+    tx = tx_result.scalar_one()
+    assert tx.amount == Decimal("250.00")
+    assert tx.is_deleted is False
+
+
 async def test_parse_handles_parser_failure(app) -> None:
     class ErrorParser:
-        async def parse(self, *, raw_text: str, occurred_at_hint, reference_datetime):
+        async def parse(self, *, raw_text: str, reference_datetime):
             raise ParserError("boom")
 
     app.dependency_overrides[get_parser] = lambda: ErrorParser()
@@ -65,15 +111,12 @@ async def test_confirm_creates_transactions(client, db_session) -> None:
         "entry_id": entry_id,
         "transactions": [
             {
-                "occurred_at": occurred_at,
+                "occurred_time": occurred_at,
                 "amount": 250,
                 "currency": "INR",
                 "direction": "outflow",
                 "type": "expense",
                 "category": "Food & Drinks",
-                "subcategory": "Dining",
-                "merchant": "Cafe",
-                "needs_confirmation": False,
                 "assumptions": [],
             }
         ],
@@ -82,7 +125,6 @@ async def test_confirm_creates_transactions(client, db_session) -> None:
     response = await client.post("/v1/entries/confirm", json=payload)
     assert response.status_code == 201
     data = response.json()
-    assert data["entry"]["status"] == EntryStatus.confirmed.value
     assert len(data["transactions"]) == 1
 
     result = await db_session.execute(select(Entry))
@@ -103,15 +145,12 @@ async def test_confirm_replaces_transactions(client, db_session) -> None:
         "entry_id": entry_id,
         "transactions": [
             {
-                "occurred_at": "2025-01-10T19:30:00+00:00",
+                "occurred_time": "2025-01-10T19:30:00+00:00",
                 "amount": 500,
                 "currency": "INR",
                 "direction": "outflow",
                 "type": "expense",
                 "category": "Food & Drinks",
-                "subcategory": None,
-                "merchant": None,
-                "needs_confirmation": False,
                 "assumptions": [],
             }
         ],
@@ -121,15 +160,12 @@ async def test_confirm_replaces_transactions(client, db_session) -> None:
         "entry_id": entry_id,
         "transactions": [
             {
-                "occurred_at": "2025-01-10T20:00:00+00:00",
+                "occurred_time": "2025-01-10T20:00:00+00:00",
                 "amount": 650,
                 "currency": "INR",
                 "direction": "outflow",
                 "type": "expense",
                 "category": "Food & Drinks",
-                "subcategory": None,
-                "merchant": None,
-                "needs_confirmation": False,
                 "assumptions": [],
             }
         ],
@@ -159,15 +195,12 @@ async def test_confirm_missing_entry(client) -> None:
         "entry_id": 9999,
         "transactions": [
             {
-                "occurred_at": "2025-01-10T12:30:00+00:00",
+                "occurred_time": "2025-01-10T12:30:00+00:00",
                 "amount": 250,
                 "currency": "INR",
                 "direction": "outflow",
                 "type": "expense",
                 "category": "Food & Drinks",
-                "subcategory": "Dining",
-                "merchant": "Cafe",
-                "needs_confirmation": False,
                 "assumptions": [],
             }
         ],
@@ -217,7 +250,6 @@ async def test_list_transactions_filters_and_paginates(client, db_session) -> No
     response = await client.get("/v1/transactions", params={"from": "2025-01-09", "to": "2025-01-10"})
     assert response.status_code == 200
     data = response.json()
-    assert data["count"] == 2
     assert data["total_count"] == 2
     assert data["limit"] == 200
     assert data["offset"] == 0

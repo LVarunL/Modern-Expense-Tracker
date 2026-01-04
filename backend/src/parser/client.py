@@ -33,7 +33,6 @@ class OpenAIChatClient:
     def _build_messages(
         self,
         raw_text: str,
-        occurred_at_hint: str | None,
         reference_datetime: str,
     ) -> list[dict[str, str]]:
         system_message = build_system_message()
@@ -42,15 +41,10 @@ class OpenAIChatClient:
             messages.append({"role": "user", "content": example["input"]})
             messages.append({"role": "assistant", "content": example["output"]})
 
-        hint_line = f"occurred_at_hint: {occurred_at_hint}" if occurred_at_hint else "occurred_at_hint: null"
         messages.append(
             {
                 "role": "user",
-                "content": (
-                    f"reference_datetime: {reference_datetime}\n"
-                    f"text: {raw_text}\n"
-                    f"{hint_line}"
-                ),
+                "content": (f"reference_datetime: {reference_datetime}\n" f"text: {raw_text}"),
             }
         )
         return messages
@@ -59,10 +53,9 @@ class OpenAIChatClient:
         self,
         *,
         raw_text: str,
-        occurred_at_hint: str | None,
         reference_datetime: str,
     ) -> dict[str, Any]:
-        messages = self._build_messages(raw_text, occurred_at_hint, reference_datetime)
+        messages = self._build_messages(raw_text, reference_datetime)
         payload = {
             "model": self._model,
             "messages": messages,
@@ -108,7 +101,6 @@ class GeminiClient:
     def _build_contents(
         self,
         raw_text: str,
-        occurred_at_hint: str | None,
         reference_datetime: str,
     ) -> list[dict[str, object]]:
         contents: list[dict[str, Any]] = []
@@ -116,17 +108,12 @@ class GeminiClient:
             contents.append({"role": "user", "parts": [{"text": example["input"]}]})
             contents.append({"role": "model", "parts": [{"text": example["output"]}]})
 
-        hint_line = f"occurred_at_hint: {occurred_at_hint}" if occurred_at_hint else "occurred_at_hint: null"
         contents.append(
             {
                 "role": "user",
                 "parts": [
                     {
-                        "text": (
-                            f"reference_datetime: {reference_datetime}\n"
-                            f"text: {raw_text}\n"
-                            f"{hint_line}"
-                        )
+                        "text": (f"reference_datetime: {reference_datetime}\n" f"text: {raw_text}")
                     }
                 ],
             }
@@ -137,10 +124,9 @@ class GeminiClient:
         self,
         *,
         raw_text: str,
-        occurred_at_hint: str | None,
         reference_datetime: str,
     ) -> dict[str, Any]:
-        contents = self._build_contents(raw_text, occurred_at_hint, reference_datetime)
+        contents = self._build_contents(raw_text, reference_datetime)
         payload = {
             "contents": contents,
             "systemInstruction": {"parts": [{"text": build_system_message()}]},

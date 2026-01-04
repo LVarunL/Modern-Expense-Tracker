@@ -12,8 +12,6 @@ class LLMTransaction(BaseModel):
     direction: str
     type: str
     category: str
-    subcategory: str | None = None
-    merchant: str | None = None
     needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
 
@@ -26,6 +24,5 @@ class LLMParseOutput(BaseModel):
     transactions: list[LLMTransaction] = Field(default_factory=list)
     needs_confirmation: bool = False
     assumptions: list[str] = Field(default_factory=list)
-    follow_up_question: str | None = None
 
     model_config = ConfigDict(extra="forbid")

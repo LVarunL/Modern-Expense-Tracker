@@ -25,7 +25,6 @@ def test_post_process_amount_rules() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Coffee")
@@ -52,7 +51,6 @@ def test_post_process_direction_and_type() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Snacks")
@@ -79,7 +77,6 @@ def test_post_process_invalid_direction_defaults() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Snack")
@@ -105,7 +102,6 @@ def test_post_process_invalid_category() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Snack")
@@ -131,7 +127,6 @@ def test_post_process_split_handling() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Split the bill")
@@ -157,7 +152,6 @@ def test_post_process_split_with_count() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Split among 3 people")
@@ -183,7 +177,6 @@ def test_post_process_type_unrecognized() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Snack")
@@ -209,7 +202,6 @@ def test_post_process_large_amount_flags_confirmation() -> None:
         ],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
 
     result = post_process(parsed, raw_text="Bought a car")
@@ -226,7 +218,7 @@ def test_post_process_keeps_occurred_at() -> None:
         transactions=[],
         needs_confirmation=False,
         assumptions=[],
-        follow_up_question=None,
     )
     result = post_process(parsed, raw_text="No tx")
     assert result["occurred_at"] == when
+    assert result["needs_confirmation"] is True

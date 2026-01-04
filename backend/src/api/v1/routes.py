@@ -80,7 +80,6 @@ async def parse_text(
     try:
         result = await parser.parse(
             raw_text=payload.raw_text,
-            occurred_at_hint=payload.occurred_at_hint,
             reference_datetime=reference_datetime,
         )
     except ParserError as exc:
@@ -91,13 +90,17 @@ async def parse_text(
 
     preview = ParsePreview.model_validate(result.preview)
     preview_json = preview.model_dump(mode="json")
+    needs_confirmation = bool(result.preview.get("needs_confirmation"))
+    if not preview.transactions:
+        needs_confirmation = True
+    preview_json["needs_confirmation"] = needs_confirmation
+    entry_status = EntryStatus.pending_confirmation if needs_confirmation else EntryStatus.confirmed
     entry = await create_entry(
         session,
         entry=EntryCreate(
             user_id=settings.default_user_id,
             raw_text=payload.raw_text,
-            occurred_at_hint=payload.occurred_at_hint,
-            status=EntryStatus.pending_confirmation,
+            status=entry_status,
             parser_output_json={
                 "raw_output": result.raw_output,
                 "post_processed": preview_json,
@@ -105,10 +108,26 @@ async def parse_text(
             parser_version=result.parser_version,
         ),
     )
+    if not needs_confirmation and preview.transactions:
+        occurred_at = preview.occurred_time or reference_datetime
+        transaction_inputs = [
+            TransactionCreate(
+                entry_id=entry.id,
+                occurred_at=occurred_at,
+                amount=item.amount,
+                currency=item.currency,
+                direction=item.direction,
+                type=item.type,
+                category=item.category,
+                assumptions_json=item.assumptions,
+            )
+            for item in preview.transactions
+        ]
+        await create_transactions(session, items=transaction_inputs)
     return ParseResponse(
         entry_id=entry.id,
         status=entry.status,
-        **preview.model_dump(),
+        **preview.model_dump(mode="json"),
     )
 
 
@@ -139,15 +158,12 @@ async def confirm_entry(
         transaction_inputs = [
             TransactionCreate(
                 entry_id=entry.id,
-                occurred_at=item.occurred_at,
+                occurred_at=item.occurred_time,
                 amount=item.amount,
                 currency=item.currency,
                 direction=item.direction,
                 type=item.type,
                 category=item.category,
-                subcategory=item.subcategory,
-                merchant=item.merchant,
-                needs_confirmation=item.needs_confirmation,
                 assumptions_json=item.assumptions,
             )
             for item in payload.transactions
@@ -169,6 +185,10 @@ async def confirm_entry(
             status=EntryStatus.confirmed,
             commit=False,
         )
+        await session.flush()
+        await session.refresh(entry)
+        for transaction in transactions:
+            await session.refresh(transaction)
 
     return ConfirmResponse(entry=entry, transactions=transactions)
 
@@ -206,7 +226,6 @@ async def list_transactions(
     total_count = await session.scalar(count_query)
     return TransactionsResponse(
         items=items,
-        count=len(items),
         total_count=int(total_count or 0),
         limit=limit,
         offset=offset,

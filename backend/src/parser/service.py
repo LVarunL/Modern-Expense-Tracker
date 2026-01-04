@@ -55,14 +55,11 @@ class LLMParser:
         self,
         *,
         raw_text: str,
-        occurred_at_hint: datetime | None,
         reference_datetime: datetime,
     ) -> ParsedResult:
-        hint = occurred_at_hint.isoformat() if occurred_at_hint else None
         try:
             raw_output = await self._client.parse(
                 raw_text=raw_text,
-                occurred_at_hint=hint,
                 reference_datetime=reference_datetime.isoformat(),
             )
         except LLMClientError as exc:

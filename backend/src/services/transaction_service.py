@@ -6,6 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import func
 
 from src.models.transaction import Transaction
 from src.services.schemas import TransactionCreate
@@ -26,9 +27,6 @@ async def create_transactions(
             direction=item.direction,
             type=item.type,
             category=item.category,
-            subcategory=item.subcategory,
-            merchant=item.merchant,
-            needs_confirmation=item.needs_confirmation,
             assumptions_json=item.assumptions_json,
         )
         for item in items
@@ -83,7 +81,7 @@ async def soft_delete_transactions_for_entry(
     await session.execute(
         Transaction.__table__.update()
         .where(Transaction.entry_id == entry_id)
-        .values(is_deleted=True)
+        .values(is_deleted=True, updated_at=func.now())
     )
     if commit:
         await session.commit()

@@ -19,6 +19,7 @@ class Settings:
     llm_temperature: float
     parser_version: str
     llm_provider: str
+    cors_allow_origins: list[str]
 
 
 @lru_cache
@@ -30,6 +31,10 @@ def get_settings() -> Settings:
         database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
     environment = os.getenv("ENVIRONMENT", "development")
     default_user_id = os.getenv("DEFAULT_USER_ID", "demo-user")
+    cors_allow_origins_env = os.getenv("CORS_ALLOW_ORIGINS", "")
+    cors_allow_origins = [origin.strip() for origin in cors_allow_origins_env.split(",") if origin.strip()]
+    if not cors_allow_origins and environment == "development":
+        cors_allow_origins = ["*"]
     llm_provider = os.getenv("LLM_PROVIDER", "openai").lower()
     llm_api_key = os.getenv("LLM_API_KEY")
     llm_base_url = os.getenv("LLM_BASE_URL")
@@ -56,4 +61,5 @@ def get_settings() -> Settings:
         llm_temperature=llm_temperature,
         parser_version=parser_version,
         llm_provider=llm_provider,
+        cors_allow_origins=cors_allow_origins,
     )

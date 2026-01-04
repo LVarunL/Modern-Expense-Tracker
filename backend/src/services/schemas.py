@@ -15,7 +15,6 @@ class EntryCreate:
     user_id: str
     raw_text: str
     source: EntrySource = EntrySource.manual_text
-    occurred_at_hint: datetime | None = None
     parser_output_json: dict[str, Any] | None = None
     parser_version: str | None = None
     status: EntryStatus = EntryStatus.parsed
@@ -31,7 +30,4 @@ class TransactionCreate:
     direction: TransactionDirection
     type: TransactionType
     category: str
-    subcategory: str | None = None
-    merchant: str | None = None
-    needs_confirmation: bool = False
     assumptions_json: dict[str, Any] | list[str] | None = None
