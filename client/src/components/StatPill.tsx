@@ -1,19 +1,23 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { colors } from "../theme/colors";
+import { typography } from "../theme/typography";
 
 interface StatPillProps {
   label: string;
   value: string;
-  tone?: 'default' | 'accent';
+  tone?: "default" | "accent";
 }
 
-export function StatPill({ label, value, tone = 'default' }: StatPillProps) {
+export function StatPill({ label, value, tone = "default" }: StatPillProps) {
   return (
-    <View style={[styles.card, tone === 'accent' && styles.cardAccent]}>
-      <Text style={[styles.label, tone === 'accent' && styles.labelAccent]}>{label}</Text>
-      <Text style={[styles.value, tone === 'accent' && styles.valueAccent]}>{value}</Text>
+    <View style={[styles.card, tone === "accent" && styles.cardAccent]}>
+      <Text style={[styles.label, tone === "accent" && styles.labelAccent]}>
+        {label}
+      </Text>
+      <Text style={[styles.value, tone === "accent" && styles.valueAccent]}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -37,7 +41,7 @@ const styles = StyleSheet.create({
     color: colors.slate,
   },
   labelAccent: {
-    color: '#DCE6FF',
+    color: "#DCE6FF",
   },
   value: {
     fontFamily: typography.fontFamily.bold,

@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import type { TransactionDirection, TransactionType } from '../api/types';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { sanitizeAmountInput } from '../utils/format';
+import type { TransactionDirection, TransactionType } from "../api/types";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
+import { sanitizeAmountInput } from "../utils/format";
 
 export interface EditableTransaction {
   id: string;
@@ -55,10 +55,15 @@ export function EditableTransactionCard({
         {allowRemove ? (
           <Pressable
             onPress={item.isDeleted ? onRestore : onRemove}
-            style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
+            style={({ pressed }) => [
+              styles.action,
+              pressed && styles.actionPressed,
+            ]}
           >
-            <Text style={[styles.actionText, item.isDeleted && styles.restoreText]}>
-              {item.isDeleted ? 'Undo' : 'Remove'}
+            <Text
+              style={[styles.actionText, item.isDeleted && styles.restoreText]}
+            >
+              {item.isDeleted ? "Undo" : "Remove"}
             </Text>
           </Pressable>
         ) : null}
@@ -70,11 +75,18 @@ export function EditableTransactionCard({
         <>
           <View style={styles.fieldRow}>
             <Text style={styles.fieldLabel}>Amount</Text>
-            <View style={[styles.amountInput, amountError && styles.amountInputError]}>
+            <View
+              style={[
+                styles.amountInput,
+                amountError && styles.amountInputError,
+              ]}
+            >
               <Text style={styles.currency}>₹</Text>
               <TextInput
                 value={item.amountInput}
-                onChangeText={(value) => onUpdate({ amountInput: sanitizeAmountInput(value) })}
+                onChangeText={(value) =>
+                  onUpdate({ amountInput: sanitizeAmountInput(value) })
+                }
                 keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={colors.steel}
@@ -82,7 +94,9 @@ export function EditableTransactionCard({
               />
             </View>
           </View>
-          {amountError ? <Text style={styles.errorText}>{amountError}</Text> : null}
+          {amountError ? (
+            <Text style={styles.errorText}>{amountError}</Text>
+          ) : null}
 
           {showCurrency ? (
             <View style={styles.fieldRow}>
@@ -92,7 +106,10 @@ export function EditableTransactionCard({
                   value={item.currency}
                   onChangeText={(value) =>
                     onUpdate({
-                      currency: value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3),
+                      currency: value
+                        .toUpperCase()
+                        .replace(/[^A-Z]/g, "")
+                        .slice(0, 3),
                     })
                   }
                   autoCapitalize="characters"
@@ -161,7 +178,10 @@ export function EditableTransactionCard({
             <View style={styles.assumptions}>
               <Text style={styles.assumptionsTitle}>Assumptions</Text>
               {item.assumptions.map((assumption, idx) => (
-                <Text key={`${item.id}-assumption-${idx}`} style={styles.assumptionText}>
+                <Text
+                  key={`${item.id}-assumption-${idx}`}
+                  style={styles.assumptionText}
+                >
                   - {assumption}
                 </Text>
               ))}
@@ -186,9 +206,9 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   headerTitle: {
     fontFamily: typography.fontFamily.semibold,
@@ -224,14 +244,14 @@ const styles = StyleSheet.create({
     color: colors.slate,
   },
   amountInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.divider,
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
   },
   amountInputError: {
     borderColor: colors.danger,
@@ -242,7 +262,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
   },
   currency: {
     fontFamily: typography.fontFamily.semibold,
@@ -262,8 +282,8 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.xs,
   },
   chip: {
@@ -276,7 +296,7 @@ const styles = StyleSheet.create({
   },
   chipSelected: {
     borderColor: colors.cobalt,
-    backgroundColor: '#E0E7FF',
+    backgroundColor: "#E0E7FF",
   },
   chipPressed: {
     opacity: 0.8,
@@ -290,7 +310,7 @@ const styles = StyleSheet.create({
     color: colors.cobalt,
   },
   assumptions: {
-    backgroundColor: '#F8F6EE',
+    backgroundColor: "#F8F6EE",
     borderRadius: 12,
     padding: spacing.sm,
   },

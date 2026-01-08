@@ -1,8 +1,8 @@
-import type { PropsWithChildren } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import type { PropsWithChildren } from "react";
+import { StyleSheet, TextInput, View } from "react-native";
 
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { colors } from "../theme/colors";
+import { typography } from "../theme/typography";
 
 interface InputFieldProps {
   value: string;
@@ -11,7 +11,12 @@ interface InputFieldProps {
   multiline?: boolean;
 }
 
-export function InputField({ value, onChangeText, placeholder, multiline }: PropsWithChildren<InputFieldProps>) {
+export function InputField({
+  value,
+  onChangeText,
+  placeholder,
+  multiline,
+}: PropsWithChildren<InputFieldProps>) {
   return (
     <View style={styles.wrapper}>
       <TextInput
@@ -21,7 +26,7 @@ export function InputField({ value, onChangeText, placeholder, multiline }: Prop
         placeholderTextColor={colors.steel}
         style={[styles.input, multiline && styles.multiline]}
         multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'center'}
+        textAlignVertical={multiline ? "top" : "center"}
       />
     </View>
   );

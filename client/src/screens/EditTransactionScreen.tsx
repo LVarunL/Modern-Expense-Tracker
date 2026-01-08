@@ -1,43 +1,51 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
-import { useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { RouteProp } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Animated, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { getErrorMessage, updateTransaction } from '../api';
-import type { TransactionOut } from '../api/types';
-import { EditableTransactionCard, type EditableTransaction } from '../components/EditableTransactionCard';
-import { GhostButton } from '../components/GhostButton';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { Screen } from '../components/Screen';
+import { getErrorMessage, updateTransaction } from "../api";
+import {
+  EditableTransactionCard,
+  type EditableTransaction,
+} from "../components/EditableTransactionCard";
+import { GhostButton } from "../components/GhostButton";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { Screen } from "../components/Screen";
 import {
   TRANSACTION_CATEGORIES,
   TRANSACTION_TYPES,
   TRANSACTION_TYPE_LABELS,
   TYPE_CATEGORY_MAP,
   TYPE_DIRECTION_MAP,
-} from '../constants/transactions';
-import type { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { useEntranceAnimation } from '../utils/animations';
-import { formatDateTime, parseAmount } from '../utils/format';
+} from "../constants/transactions";
+import type { RootStackParamList } from "../navigation/types";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
+import { useEntranceAnimation } from "../utils/animations";
+import { formatDateTime, parseAmount } from "../utils/format";
 
 export function EditTransactionScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute<RouteProp<RootStackParamList, 'EditTransactionModal'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route =
+    useRoute<RouteProp<RootStackParamList, "EditTransactionModal">>();
   const { transaction } = route.params;
   const animation = useEntranceAnimation(18);
+  const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState<EditableTransaction>(() => ({
     id: `edit-${transaction.id}`,
     amountInput: String(transaction.amount),
-    currency: transaction.currency ?? 'INR',
+    currency: transaction.currency ?? "INR",
     direction: transaction.direction,
     type: transaction.type,
     category: transaction.category,
-    assumptions: Array.isArray(transaction.assumptions_json) ? transaction.assumptions_json : [],
+    assumptions: Array.isArray(transaction.assumptions_json)
+      ? transaction.assumptions_json
+      : [],
     isDeleted: false,
   }));
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -46,16 +54,15 @@ export function EditTransactionScreen() {
   const amountError = (() => {
     const parsed = parseAmount(draft.amountInput);
     if (!Number.isFinite(parsed) || parsed <= 0) {
-      return 'Enter a valid amount.';
+      return "Enter a valid amount.";
     }
     return null;
   })();
 
   const currencyError =
-    draft.currency.trim().length === 3 ? null : 'Use a 3-letter currency code.';
+    draft.currency.trim().length === 3 ? null : "Use a 3-letter currency code.";
 
-  const canSave =
-    !amountError && !currencyError && !isSaving;
+  const canSave = !amountError && !currencyError && !isSaving;
 
   const updateDraft = (updates: Partial<EditableTransaction>) => {
     setDraft((prev) => {
@@ -73,7 +80,7 @@ export function EditTransactionScreen() {
 
   const handleSave = async () => {
     if (!canSave) {
-      setSaveError('Fix the highlighted fields before saving.');
+      setSaveError("Fix the highlighted fields before saving.");
       return;
     }
 
@@ -88,6 +95,8 @@ export function EditTransactionScreen() {
         type: draft.type,
         category: draft.category,
       });
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await queryClient.invalidateQueries({ queryKey: ["summary"] });
       navigation.goBack();
     } catch (error) {
       setSaveError(getErrorMessage(error));
@@ -98,7 +107,10 @@ export function EditTransactionScreen() {
 
   return (
     <Screen withGradient={false}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View
           style={{
             opacity: animation.opacity,
@@ -107,7 +119,9 @@ export function EditTransactionScreen() {
         >
           <Text style={styles.title}>Edit transaction</Text>
           <Text style={styles.subtitle}>{transaction.category}</Text>
-          <Text style={styles.meta}>{formatDateTime(transaction.occurred_time)}</Text>
+          <Text style={styles.meta}>
+            {formatDateTime(transaction.occurred_time)}
+          </Text>
         </Animated.View>
 
         <EditableTransactionCard
@@ -125,12 +139,14 @@ export function EditTransactionScreen() {
           showCurrency
         />
 
-        {currencyError ? <Text style={styles.errorText}>{currencyError}</Text> : null}
+        {currencyError ? (
+          <Text style={styles.errorText}>{currencyError}</Text>
+        ) : null}
         {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
 
         <View style={styles.actions}>
           <PrimaryButton
-            label={isSaving ? 'Saving...' : 'Save changes'}
+            label={isSaving ? "Saving..." : "Save changes"}
             onPress={handleSave}
             disabled={!canSave}
           />

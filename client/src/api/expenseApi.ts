@@ -1,4 +1,4 @@
-import { request } from './client';
+import { request } from "./client";
 import type {
   ConfirmRequest,
   ConfirmResponse,
@@ -8,18 +8,20 @@ import type {
   TransactionOut,
   TransactionUpdateRequest,
   TransactionsResponse,
-} from './types';
+} from "./types";
 
 export function parseEntry(payload: ParseRequest): Promise<ParseResponse> {
-  return request<ParseResponse>('/v1/parse', {
-    method: 'POST',
+  return request<ParseResponse>("/v1/parse", {
+    method: "POST",
     body: payload,
   });
 }
 
-export function confirmEntry(payload: ConfirmRequest): Promise<ConfirmResponse> {
-  return request<ConfirmResponse>('/v1/entries/confirm', {
-    method: 'POST',
+export function confirmEntry(
+  payload: ConfirmRequest
+): Promise<ConfirmResponse> {
+  return request<ConfirmResponse>("/v1/entries/confirm", {
+    method: "POST",
     body: payload,
   });
 }
@@ -32,18 +34,18 @@ export function fetchTransactions(params?: {
 }): Promise<TransactionsResponse> {
   const query = new URLSearchParams();
   if (params?.from) {
-    query.set('from', params.from);
+    query.set("from", params.from);
   }
   if (params?.to) {
-    query.set('to', params.to);
+    query.set("to", params.to);
   }
   if (params?.limit) {
-    query.set('limit', String(params.limit));
+    query.set("limit", String(params.limit));
   }
   if (params?.offset) {
-    query.set('offset', String(params.offset));
+    query.set("offset", String(params.offset));
   }
-  const suffix = query.toString() ? `?${query.toString()}` : '';
+  const suffix = query.toString() ? `?${query.toString()}` : "";
   return request<TransactionsResponse>(`/v1/transactions${suffix}`);
 }
 
@@ -54,10 +56,10 @@ export function fetchSummary(month: string): Promise<SummaryResponse> {
 
 export function updateTransaction(
   transactionId: number,
-  payload: TransactionUpdateRequest,
+  payload: TransactionUpdateRequest
 ): Promise<TransactionOut> {
   return request(`/v1/transactions/${transactionId}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: payload,
   });
 }

@@ -1,9 +1,9 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { EditTransactionScreen } from '../screens/EditTransactionScreen';
-import { PreviewScreen } from '../screens/PreviewScreen';
-import { TabNavigator } from './TabNavigator';
-import type { RootStackParamList } from './types';
+import { EditTransactionScreen } from "../screens/EditTransactionScreen";
+import { PreviewScreen } from "../screens/PreviewScreen";
+import { TabNavigator } from "./TabNavigator";
+import type { RootStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -14,12 +14,12 @@ export function RootNavigator() {
       <Stack.Screen
         name="PreviewModal"
         component={PreviewScreen}
-        options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        options={{ presentation: "modal", animation: "slide_from_bottom" }}
       />
       <Stack.Screen
         name="EditTransactionModal"
         component={EditTransactionScreen}
-        options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        options={{ presentation: "modal", animation: "slide_from_bottom" }}
       />
     </Stack.Navigator>
   );

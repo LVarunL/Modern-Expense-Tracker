@@ -1,32 +1,39 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from "react-native";
 
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { colors } from "../theme/colors";
+import { typography } from "../theme/typography";
 
 interface TransactionRowProps {
   title: string;
   subtitle?: string;
   amount: string;
-  accent?: 'inflow' | 'outflow';
+  accent?: "inflow" | "outflow";
 }
 
-export function TransactionRow({ title, subtitle, amount, accent = 'outflow' }: TransactionRowProps) {
+export function TransactionRow({
+  title,
+  subtitle,
+  amount,
+  accent = "outflow",
+}: TransactionRowProps) {
   return (
     <View style={styles.row}>
       <View style={styles.meta}>
         <Text style={styles.title}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
-      <Text style={[styles.amount, accent === 'inflow' && styles.amountInflow]}>{amount}</Text>
+      <Text style={[styles.amount, accent === "inflow" && styles.amountInflow]}>
+        {amount}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,

@@ -1,12 +1,12 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-import { CaptureScreen } from '../screens/CaptureScreen';
-import { FeedScreen } from '../screens/FeedScreen';
-import { SummaryScreen } from '../screens/SummaryScreen';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import type { TabParamList } from './types';
+import { CaptureScreen } from "../screens/CaptureScreen";
+import { FeedScreen } from "../screens/FeedScreen";
+import { SummaryScreen } from "../screens/SummaryScreen";
+import { colors } from "../theme/colors";
+import { typography } from "../theme/typography";
+import type { TabParamList } from "./types";
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -29,11 +29,11 @@ export function TabNavigator() {
         },
         tabBarIcon: ({ color, size }) => {
           const iconName =
-            route.name === 'Capture'
-              ? 'create-outline'
-              : route.name === 'Feed'
-              ? 'list-outline'
-              : 'pie-chart-outline';
+            route.name === "Capture"
+              ? "create-outline"
+              : route.name === "Feed"
+              ? "list-outline"
+              : "pie-chart-outline";
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}

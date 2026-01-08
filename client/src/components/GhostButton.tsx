@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from "react-native";
 
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { colors } from "../theme/colors";
+import { typography } from "../theme/typography";
 
 interface GhostButtonProps {
   onPress: () => void;
@@ -9,7 +9,11 @@ interface GhostButtonProps {
   disabled?: boolean;
 }
 
-export function GhostButton({ onPress, label, disabled = false }: GhostButtonProps) {
+export function GhostButton({
+  onPress,
+  label,
+  disabled = false,
+}: GhostButtonProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -32,7 +36,7 @@ const styles = StyleSheet.create({
     borderColor: colors.divider,
     paddingVertical: 14,
     paddingHorizontal: 18,
-    alignItems: 'center',
+    alignItems: "center",
   },
   pressed: {
     opacity: 0.7,

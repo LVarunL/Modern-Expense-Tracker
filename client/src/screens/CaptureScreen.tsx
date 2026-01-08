@@ -1,5 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   Animated,
@@ -31,6 +32,7 @@ const promptSuggestions = [
 export function CaptureScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -55,6 +57,8 @@ export function CaptureScreen() {
       const preview = await parseEntry({ raw_text: trimmed });
       setLastPreview(preview);
       if (preview.status === "confirmed") {
+        await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        await queryClient.invalidateQueries({ queryKey: ["summary"] });
         setText("");
         return;
       }

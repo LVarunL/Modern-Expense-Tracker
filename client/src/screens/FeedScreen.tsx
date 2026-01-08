@@ -1,21 +1,21 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { CompositeNavigationProp } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQuery } from "@tanstack/react-query";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { fetchTransactions, getErrorMessage } from '../api';
-import type { TransactionOut } from '../api/types';
-import { GhostButton } from '../components/GhostButton';
-import { Screen } from '../components/Screen';
-import { TRANSACTION_TYPE_LABELS } from '../constants/transactions';
-import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { formatCurrency, formatDateTime } from '../utils/format';
+import { fetchTransactions, getErrorMessage } from "../api";
+import type { TransactionOut } from "../api/types";
+import { GhostButton } from "../components/GhostButton";
+import { Screen } from "../components/Screen";
+import { TRANSACTION_TYPE_LABELS } from "../constants/transactions";
+import type { RootStackParamList, TabParamList } from "../navigation/types";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
+import { formatCurrency, formatDateTime } from "../utils/format";
 
 const FEED_LIMIT = 50;
 
@@ -26,42 +26,33 @@ type FeedNavigation = CompositeNavigationProp<
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNavigation>();
-  const [items, setItems] = useState<TransactionOut[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadTransactions = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetchTransactions({ limit: FEED_LIMIT, offset: 0 });
-      setItems(response.items);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      void loadTransactions();
-    }, []),
-  );
+  const query = useQuery({
+    queryKey: ["transactions", { limit: FEED_LIMIT, offset: 0 }],
+    queryFn: () => fetchTransactions({ limit: FEED_LIMIT, offset: 0 }),
+  });
+  const items: TransactionOut[] = query.data?.items ?? [];
+  const error = query.error ? getErrorMessage(query.error) : null;
+  const isLoading = query.isLoading;
 
   return (
     <Screen>
       <View style={styles.header}>
         <Text style={styles.title}>Feed</Text>
-        <Text style={styles.subtitle}>Latest transactions across categories.</Text>
+        <Text style={styles.subtitle}>
+          Latest transactions across categories.
+        </Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      >
         {isLoading ? (
           <View style={styles.stateCard}>
             <Text style={styles.stateTitle}>Loading feed...</Text>
-            <Text style={styles.stateSubtitle}>Fetching your latest entries.</Text>
+            <Text style={styles.stateSubtitle}>
+              Fetching your latest entries.
+            </Text>
           </View>
         ) : null}
 
@@ -69,14 +60,16 @@ export function FeedScreen() {
           <View style={styles.stateCard}>
             <Text style={styles.stateTitle}>Unable to load feed</Text>
             <Text style={styles.stateSubtitle}>{error}</Text>
-            <GhostButton label="Try again" onPress={loadTransactions} />
+            <GhostButton label="Try again" onPress={() => query.refetch()} />
           </View>
         ) : null}
 
         {!isLoading && !error && items.length === 0 ? (
           <View style={styles.stateCard}>
             <Text style={styles.stateTitle}>No transactions yet</Text>
-            <Text style={styles.stateSubtitle}>Capture your first expense to see it here.</Text>
+            <Text style={styles.stateSubtitle}>
+              Capture your first expense to see it here.
+            </Text>
           </View>
         ) : null}
 
@@ -87,9 +80,14 @@ export function FeedScreen() {
               return (
                 <Pressable
                   key={item.id}
-                  style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                  style={({ pressed }) => [
+                    styles.card,
+                    pressed && styles.cardPressed,
+                  ]}
                   onPress={() =>
-                    navigation.navigate('EditTransactionModal', { transaction: item })
+                    navigation.navigate("EditTransactionModal", {
+                      transaction: item,
+                    })
                   }
                 >
                   <View style={styles.cardTop}>
@@ -98,7 +96,7 @@ export function FeedScreen() {
                       <Text
                         style={[
                           styles.amount,
-                          item.direction === 'inflow' && styles.amountInflow,
+                          item.direction === "inflow" && styles.amountInflow,
                         ]}
                       >
                         {formatCurrency(item.amount, item.direction)}
@@ -107,14 +105,19 @@ export function FeedScreen() {
                     </View>
                   </View>
                   <Text style={styles.cardSubtitle}>{subtitle}</Text>
-                  <Text style={styles.cardMeta}>{formatDateTime(item.occurred_time)}</Text>
+                  <Text style={styles.cardMeta}>
+                    {formatDateTime(item.occurred_time)}
+                  </Text>
                 </Pressable>
               );
             })
           : null}
       </ScrollView>
 
-      <Pressable style={styles.fab} onPress={() => navigation.navigate('Capture')}>
+      <Pressable
+        style={styles.fab}
+        onPress={() => navigation.navigate("Capture")}
+      >
         <Ionicons name="add" size={26} color={colors.ink} />
       </Pressable>
     </Screen>
@@ -150,12 +153,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   cardTopRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     gap: 4,
   },
   cardTitle: {
@@ -209,15 +212,15 @@ const styles = StyleSheet.create({
     color: colors.slate,
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: 20,
     bottom: 26,
     width: 56,
     height: 56,
     borderRadius: 18,
     backgroundColor: colors.citrus,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: colors.ink,
     shadowOpacity: 0.2,
     shadowRadius: 12,

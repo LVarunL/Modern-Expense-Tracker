@@ -1,8 +1,8 @@
-import type { PropsWithChildren } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { PropsWithChildren } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { colors } from "../theme/colors";
+import { typography } from "../theme/typography";
 
 interface PrimaryButtonProps {
   onPress: () => void;
@@ -43,9 +43,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     shadowColor: colors.ink,
     shadowOpacity: 0.12,
     shadowRadius: 12,

@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { Animated } from 'react-native';
+import { useEffect, useRef } from "react";
+import { Animated } from "react-native";
 
 export function useEntranceAnimation(offset = 16) {
   const opacity = useRef(new Animated.Value(0)).current;

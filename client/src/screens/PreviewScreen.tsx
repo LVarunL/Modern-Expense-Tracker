@@ -1,56 +1,64 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
-import { useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { RouteProp } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Animated, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { confirmEntry, getErrorMessage } from '../api';
-import type { ConfirmRequest } from '../api/types';
-import { EditableTransactionCard, type EditableTransaction } from '../components/EditableTransactionCard';
-import { GhostButton } from '../components/GhostButton';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { Screen } from '../components/Screen';
+import { confirmEntry, getErrorMessage } from "../api";
+import type { ConfirmRequest } from "../api/types";
+import {
+  EditableTransactionCard,
+  type EditableTransaction,
+} from "../components/EditableTransactionCard";
+import { GhostButton } from "../components/GhostButton";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { Screen } from "../components/Screen";
 import {
   TRANSACTION_CATEGORIES,
   TRANSACTION_TYPES,
   TRANSACTION_TYPE_LABELS,
   TYPE_CATEGORY_MAP,
   TYPE_DIRECTION_MAP,
-} from '../constants/transactions';
-import type { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { useEntranceAnimation } from '../utils/animations';
-import { parseAmount } from '../utils/format';
+} from "../constants/transactions";
+import type { RootStackParamList } from "../navigation/types";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
+import { useEntranceAnimation } from "../utils/animations";
+import { parseAmount } from "../utils/format";
 
 export function PreviewScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute<RouteProp<RootStackParamList, 'PreviewModal'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, "PreviewModal">>();
   const { preview, rawText } = route.params;
   const animation = useEntranceAnimation(20);
+  const queryClient = useQueryClient();
 
-  const [draftTransactions, setDraftTransactions] = useState<EditableTransaction[]>(() =>
+  const [draftTransactions, setDraftTransactions] = useState<
+    EditableTransaction[]
+  >(() =>
     preview.transactions.map((transaction, index) => ({
       id: `tx-${index}`,
       amountInput: String(transaction.amount),
-      currency: transaction.currency ?? 'INR',
+      currency: transaction.currency ?? "INR",
       direction: transaction.direction,
       type: transaction.type,
       category: transaction.category,
       assumptions: transaction.assumptions ?? [],
       isDeleted: false,
-    })),
+    }))
   );
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
   const occurredAtLabel = preview.occurred_time
-    ? new Date(preview.occurred_time).toLocaleString('en-IN', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
+    ? new Date(preview.occurred_time).toLocaleString("en-IN", {
+        dateStyle: "medium",
+        timeStyle: "short",
       })
-    : 'No date captured';
+    : "No date captured";
 
   const amountErrors = draftTransactions.map((item) => {
     if (item.isDeleted) {
@@ -58,16 +66,22 @@ export function PreviewScreen() {
     }
     const parsed = parseAmount(item.amountInput);
     if (!Number.isFinite(parsed) || parsed <= 0) {
-      return 'Enter a valid amount.';
+      return "Enter a valid amount.";
     }
     return null;
   });
 
-  const activeTransactions = draftTransactions.filter((item) => !item.isDeleted);
+  const activeTransactions = draftTransactions.filter(
+    (item) => !item.isDeleted
+  );
   const hasInvalidAmounts = amountErrors.some((error) => Boolean(error));
-  const canConfirm = activeTransactions.length > 0 && !hasInvalidAmounts && !isConfirming;
+  const canConfirm =
+    activeTransactions.length > 0 && !hasInvalidAmounts && !isConfirming;
 
-  const updateTransaction = (id: string, updates: Partial<EditableTransaction>) => {
+  const updateTransaction = (
+    id: string,
+    updates: Partial<EditableTransaction>
+  ) => {
     setDraftTransactions((prev) =>
       prev.map((item) => {
         if (item.id !== id) {
@@ -82,13 +96,13 @@ export function PreviewScreen() {
           }
         }
         return next;
-      }),
+      })
     );
   };
 
   const handleConfirm = async () => {
     if (!canConfirm) {
-      setConfirmError('Fix the highlighted amounts before confirming.');
+      setConfirmError("Fix the highlighted amounts before confirming.");
       return;
     }
 
@@ -102,7 +116,7 @@ export function PreviewScreen() {
         transactions: activeTransactions.map((item) => ({
           occurred_time: occurredAt,
           amount: parseAmount(item.amountInput),
-          currency: item.currency ?? 'INR',
+          currency: item.currency ?? "INR",
           direction: item.direction,
           type: item.type,
           category: item.category,
@@ -110,6 +124,8 @@ export function PreviewScreen() {
         })),
       };
       await confirmEntry(payload);
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await queryClient.invalidateQueries({ queryKey: ["summary"] });
       navigation.goBack();
     } catch (error) {
       setConfirmError(getErrorMessage(error));
@@ -120,7 +136,10 @@ export function PreviewScreen() {
 
   return (
     <Screen withGradient={false}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View
           style={{
             opacity: animation.opacity,
@@ -128,7 +147,9 @@ export function PreviewScreen() {
           }}
         >
           <Text style={styles.title}>Preview & Confirm</Text>
-          <Text style={styles.subtitle}>{preview.entry_summary ?? rawText}</Text>
+          <Text style={styles.subtitle}>
+            {preview.entry_summary ?? rawText}
+          </Text>
           <Text style={styles.meta}>{occurredAtLabel}</Text>
         </Animated.View>
 
@@ -156,22 +177,30 @@ export function PreviewScreen() {
                 amountError={amountErrors[index] ?? undefined}
                 onUpdate={(updates) => updateTransaction(item.id, updates)}
                 onRemove={() => updateTransaction(item.id, { isDeleted: true })}
-                onRestore={() => updateTransaction(item.id, { isDeleted: false })}
+                onRestore={() =>
+                  updateTransaction(item.id, { isDeleted: false })
+                }
               />
             ))
           ) : (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>No transactions extracted yet.</Text>
-              <Text style={styles.emptySubtitle}>Edit your input and try parsing again.</Text>
+              <Text style={styles.emptyTitle}>
+                No transactions extracted yet.
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                Edit your input and try parsing again.
+              </Text>
             </View>
           )}
         </View>
 
-        {confirmError ? <Text style={styles.errorText}>{confirmError}</Text> : null}
+        {confirmError ? (
+          <Text style={styles.errorText}>{confirmError}</Text>
+        ) : null}
 
         <View style={styles.actions}>
           <PrimaryButton
-            label={isConfirming ? 'Saving...' : 'Confirm & Save'}
+            label={isConfirming ? "Saving..." : "Confirm & Save"}
             onPress={handleConfirm}
             disabled={!canConfirm}
           />
@@ -207,7 +236,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   assumptionsCard: {
-    backgroundColor: '#F8F6EE',
+    backgroundColor: "#F8F6EE",
     borderRadius: 18,
     padding: spacing.lg,
     gap: spacing.xs,

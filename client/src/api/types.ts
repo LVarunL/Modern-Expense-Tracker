@@ -1,14 +1,14 @@
-export type TransactionDirection = 'inflow' | 'outflow';
+export type TransactionDirection = "inflow" | "outflow";
 
 export type TransactionType =
-  | 'expense'
-  | 'income'
-  | 'repayment_received'
-  | 'repayment_sent'
-  | 'refund'
-  | 'transfer'
-  | 'investment_income'
-  | 'other';
+  | "expense"
+  | "income"
+  | "repayment_received"
+  | "repayment_sent"
+  | "refund"
+  | "transfer"
+  | "investment_income"
+  | "other";
 
 export interface ParseTransaction {
   amount: number;
@@ -26,7 +26,7 @@ export interface ParseRequest {
 
 export interface ParseResponse {
   entry_id: number;
-  status: 'parsed' | 'pending_confirmation' | 'confirmed' | 'rejected';
+  status: "parsed" | "pending_confirmation" | "confirmed" | "rejected";
   entry_summary?: string | null;
   occurred_time?: string | null;
   transactions: ParseTransaction[];

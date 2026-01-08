@@ -1,73 +1,65 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { fetchSummary, getErrorMessage } from '../api';
-import type { SummaryResponse } from '../api/types';
-import { GhostButton } from '../components/GhostButton';
-import { Screen } from '../components/Screen';
-import { StatPill } from '../components/StatPill';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { formatCurrency, formatCurrencyValue } from '../utils/format';
+import { fetchSummary, getErrorMessage } from "../api";
+import { GhostButton } from "../components/GhostButton";
+import { Screen } from "../components/Screen";
+import { StatPill } from "../components/StatPill";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { typography } from "../theme/typography";
+import { formatCurrency, formatCurrencyValue } from "../utils/format";
 
 function getMonthParam(date = new Date()): string {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
 }
 
 function formatMonthLabel(month: string): string {
-  const [year, monthValue] = month.split('-').map((part) => Number(part));
+  const [year, monthValue] = month.split("-").map((part) => Number(part));
   if (!year || !monthValue) {
     return month;
   }
-  return new Date(year, monthValue - 1, 1).toLocaleString('en-IN', {
-    month: 'long',
-    year: 'numeric',
+  return new Date(year, monthValue - 1, 1).toLocaleString("en-IN", {
+    month: "long",
+    year: "numeric",
   });
 }
 
 export function SummaryScreen() {
-  const [summary, setSummary] = useState<SummaryResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const monthParam = useMemo(() => getMonthParam(), []);
-
-  const loadSummary = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetchSummary(monthParam);
-      setSummary(response);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadSummary();
-  }, [monthParam]);
+  const query = useQuery({
+    queryKey: ["summary", monthParam],
+    queryFn: () => fetchSummary(monthParam),
+  });
+  const summary = query.data ?? null;
+  const isLoading = query.isLoading;
+  const error = query.error ? getErrorMessage(query.error) : null;
 
   const categories = summary?.by_category ?? [];
   const maxValue = Math.max(...categories.map((item) => Number(item.total)), 0);
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Monthly Summary</Text>
-          <Text style={styles.subtitle}>{summary ? formatMonthLabel(summary.month) : 'This month'}</Text>
+          <Text style={styles.subtitle}>
+            {summary ? formatMonthLabel(summary.month) : "This month"}
+          </Text>
         </View>
 
         {isLoading ? (
           <View style={styles.stateCard}>
             <Text style={styles.stateTitle}>Loading summary...</Text>
-            <Text style={styles.stateSubtitle}>Crunching totals for this month.</Text>
+            <Text style={styles.stateSubtitle}>
+              Crunching totals for this month.
+            </Text>
           </View>
         ) : null}
 
@@ -75,21 +67,27 @@ export function SummaryScreen() {
           <View style={styles.stateCard}>
             <Text style={styles.stateTitle}>Unable to load summary</Text>
             <Text style={styles.stateSubtitle}>{error}</Text>
-            <GhostButton label="Try again" onPress={loadSummary} />
+            <GhostButton label="Try again" onPress={() => query.refetch()} />
           </View>
         ) : null}
 
         {!isLoading && !error && summary ? (
           <>
             <View style={styles.statsRow}>
-              <StatPill label="Inflow" value={formatCurrencyValue(summary.total_inflow)} />
-              <StatPill label="Outflow" value={formatCurrencyValue(summary.total_outflow)} />
+              <StatPill
+                label="Inflow"
+                value={formatCurrencyValue(summary.total_inflow)}
+              />
+              <StatPill
+                label="Outflow"
+                value={formatCurrencyValue(summary.total_outflow)}
+              />
             </View>
             <StatPill
               label="Net"
               value={formatCurrency(
                 Math.abs(summary.net),
-                summary.net >= 0 ? 'inflow' : 'outflow',
+                summary.net >= 0 ? "inflow" : "outflow"
               )}
               tone="accent"
             />
@@ -103,20 +101,31 @@ export function SummaryScreen() {
                   const numericTotal = Math.abs(Number(item.total));
                   const ratio = maxValue ? numericTotal / maxValue : 0;
                   return (
-                    <View key={`${item.category}-${item.direction}`} style={styles.categoryRow}>
+                    <View
+                      key={`${item.category}-${item.direction}`}
+                      style={styles.categoryRow}
+                    >
                       <View style={styles.categoryHeader}>
-                        <Text style={styles.categoryLabel}>{item.category}</Text>
+                        <Text style={styles.categoryLabel}>
+                          {item.category}
+                        </Text>
                         <Text
                           style={[
                             styles.categoryValue,
-                            item.direction === 'inflow' && styles.categoryValueInflow,
+                            item.direction === "inflow" &&
+                              styles.categoryValueInflow,
                           ]}
                         >
                           {formatCurrency(item.total, item.direction)}
                         </Text>
                       </View>
                       <View style={styles.barTrack}>
-                        <View style={[styles.barFill, { width: `${Math.round(ratio * 100)}%` }]} />
+                        <View
+                          style={[
+                            styles.barFill,
+                            { width: `${Math.round(ratio * 100)}%` },
+                          ]}
+                        />
                       </View>
                     </View>
                   );
@@ -150,7 +159,7 @@ const styles = StyleSheet.create({
     color: colors.slate,
   },
   statsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
   section: {
@@ -175,8 +184,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   categoryLabel: {
     fontFamily: typography.fontFamily.medium,
@@ -193,12 +202,12 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     height: 8,
-    backgroundColor: '#E0E7FF',
+    backgroundColor: "#E0E7FF",
     borderRadius: 999,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   barFill: {
-    height: '100%',
+    height: "100%",
     backgroundColor: colors.cobalt,
   },
   stateCard: {
