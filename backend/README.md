@@ -65,6 +65,23 @@ Quick checks:
 - If you already have an instance, call `await db_session.refresh(instance)` to reload it.
 - Avoid mixing in-memory objects created in the test with updates performed by the API without a refresh.
 
+## Seed mock data
+
+Use the script below to insert or delete a batch of mock transactions for UI testing.
+It writes directly to the database (no parsing).
+
+Create:
+
+```bash
+python -m scripts.seed_transactions create --count 300 --days 60 --tag seed:bulk
+```
+
+Delete:
+
+```bash
+python -m scripts.seed_transactions delete --tag seed:bulk
+```
+
 ## OpenAPI docs
 
 When the server is running:

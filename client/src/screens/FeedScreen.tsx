@@ -3,8 +3,8 @@ import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { CompositeNavigationProp } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useQuery } from "@tanstack/react-query";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { fetchTransactions, getErrorMessage } from "../api";
 import type { TransactionOut } from "../api/types";
@@ -17,7 +17,7 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 import { formatCurrency, formatDateTime } from "../utils/format";
 
-const FEED_LIMIT = 50;
+const FEED_PAGINATION_SIZE = 10;
 
 type FeedNavigation = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList>,
@@ -26,93 +26,140 @@ type FeedNavigation = CompositeNavigationProp<
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNavigation>();
-  const query = useQuery({
-    queryKey: ["transactions", { limit: FEED_LIMIT, offset: 0 }],
-    queryFn: () => fetchTransactions({ limit: FEED_LIMIT, offset: 0 }),
+  const query = useInfiniteQuery({
+    queryKey: ["transactions", { limit: FEED_PAGINATION_SIZE }],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      fetchTransactions({ limit: FEED_PAGINATION_SIZE, offset: pageParam }),
+    getNextPageParam: (lastPage, allPages) => {
+      const nextOffset = allPages.length * FEED_PAGINATION_SIZE;
+      return nextOffset < lastPage.total_count ? nextOffset : undefined;
+    },
   });
-  const items: TransactionOut[] = query.data?.items ?? [];
+  const items: TransactionOut[] =
+    query.data?.pages.flatMap((page) => page.items) ?? [];
   const error = query.error ? getErrorMessage(query.error) : null;
   const isLoading = query.isLoading;
+  const isRefreshing = query.isRefetching && !query.isFetchingNextPage;
+  const showErrorState = Boolean(error) && items.length === 0;
+  const showEmptyState = !isLoading && !error && items.length === 0;
+  const showFooterError = Boolean(error) && items.length > 0;
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Feed</Text>
-        <Text style={styles.subtitle}>
-          Latest transactions across categories.
-        </Text>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-      >
-        {isLoading ? (
-          <View style={styles.stateCard}>
-            <Text style={styles.stateTitle}>Loading feed...</Text>
-            <Text style={styles.stateSubtitle}>
-              Fetching your latest entries.
-            </Text>
-          </View>
-        ) : null}
-
-        {!isLoading && error ? (
-          <View style={styles.stateCard}>
-            <Text style={styles.stateTitle}>Unable to load feed</Text>
-            <Text style={styles.stateSubtitle}>{error}</Text>
-            <GhostButton label="Try again" onPress={() => query.refetch()} />
-          </View>
-        ) : null}
-
-        {!isLoading && !error && items.length === 0 ? (
-          <View style={styles.stateCard}>
-            <Text style={styles.stateTitle}>No transactions yet</Text>
-            <Text style={styles.stateSubtitle}>
-              Capture your first expense to see it here.
-            </Text>
-          </View>
-        ) : null}
-
-        {!isLoading && !error
-          ? items.map((item) => {
-              const title = item.category;
-              const subtitle = TRANSACTION_TYPE_LABELS[item.type] ?? item.type;
-              return (
-                <Pressable
-                  key={item.id}
-                  style={({ pressed }) => [
-                    styles.card,
-                    pressed && styles.cardPressed,
-                  ]}
-                  onPress={() =>
-                    navigation.navigate("EditTransactionModal", {
-                      transaction: item,
-                    })
-                  }
-                >
-                  <View style={styles.cardTop}>
-                    <Text style={styles.cardTitle}>{title}</Text>
-                    <View style={styles.cardTopRight}>
-                      <Text
-                        style={[
-                          styles.amount,
-                          item.direction === "inflow" && styles.amountInflow,
-                        ]}
-                      >
-                        {formatCurrency(item.amount, item.direction)}
-                      </Text>
-                      <Text style={styles.editHint}>Edit</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.cardSubtitle}>{subtitle}</Text>
-                  <Text style={styles.cardMeta}>
-                    {formatDateTime(item.occurred_time)}
+      <FlatList
+        data={items}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item }) => {
+          const title = item.category;
+          const subtitle = TRANSACTION_TYPE_LABELS[item.type] ?? item.type;
+          return (
+            <Pressable
+              style={({ pressed }) => [
+                styles.card,
+                pressed && styles.cardPressed,
+              ]}
+              onPress={() =>
+                navigation.navigate("EditTransactionModal", {
+                  transaction: item,
+                })
+              }
+            >
+              <View style={styles.cardTop}>
+                <Text style={styles.cardTitle}>{title}</Text>
+                <View style={styles.cardTopRight}>
+                  <Text
+                    style={[
+                      styles.amount,
+                      item.direction === "inflow" && styles.amountInflow,
+                    ]}
+                  >
+                    {formatCurrency(item.amount, item.direction)}
                   </Text>
-                </Pressable>
-              );
-            })
-          : null}
-      </ScrollView>
+                  <Text style={styles.editHint}>Edit</Text>
+                </View>
+              </View>
+              <Text style={styles.cardSubtitle}>{subtitle}</Text>
+              <Text style={styles.cardMeta}>
+                {formatDateTime(item.occurred_time)}
+              </Text>
+            </Pressable>
+          );
+        }}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={true}
+        onEndReached={() => {
+          if (query.hasNextPage && !query.isFetchingNextPage) {
+            void query.fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.3}
+        refreshing={isRefreshing}
+        onRefresh={() => query.refetch()}
+        ListHeaderComponent={
+          <View style={styles.headerWrapper}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Feed</Text>
+              <Text style={styles.subtitle}>
+                Latest transactions across categories.
+              </Text>
+            </View>
+
+            {isLoading ? (
+              <View style={styles.stateCard}>
+                <Text style={styles.stateTitle}>Loading feed...</Text>
+                <Text style={styles.stateSubtitle}>
+                  Fetching your latest entries.
+                </Text>
+              </View>
+            ) : null}
+
+            {showErrorState ? (
+              <View style={styles.stateCard}>
+                <Text style={styles.stateTitle}>Unable to load feed</Text>
+                <Text style={styles.stateSubtitle}>{error}</Text>
+                <GhostButton
+                  label="Try again"
+                  onPress={() => query.refetch()}
+                />
+              </View>
+            ) : null}
+
+            {showEmptyState ? (
+              <View style={styles.stateCard}>
+                <Text style={styles.stateTitle}>No transactions yet</Text>
+                <Text style={styles.stateSubtitle}>
+                  Capture your first expense to see it here.
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        }
+        ListFooterComponent={
+          query.isFetchingNextPage ? (
+            <View style={styles.stateCard}>
+              <Text style={styles.stateTitle}>Loading more...</Text>
+              <Text style={styles.stateSubtitle}>
+                Pulling in additional transactions.
+              </Text>
+            </View>
+          ) : showFooterError ? (
+            <View style={styles.stateCard}>
+              <Text style={styles.stateTitle}>Unable to load more</Text>
+              <Text style={styles.stateSubtitle}>{error}</Text>
+              <GhostButton
+                label="Try again"
+                onPress={() => query.fetchNextPage()}
+              />
+            </View>
+          ) : null
+        }
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        removeClippedSubviews
+        maxToRenderPerBatch={FEED_PAGINATION_SIZE}
+        windowSize={7}
+        initialNumToRender={0}
+      />
 
       <Pressable
         style={styles.fab}
@@ -125,9 +172,12 @@ export function FeedScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerWrapper: {
+    gap: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
   header: {
     paddingTop: spacing.xxl,
-    paddingBottom: spacing.lg,
     gap: spacing.sm,
   },
   title: {
@@ -141,8 +191,10 @@ const styles = StyleSheet.create({
     color: colors.slate,
   },
   list: {
-    gap: spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: 140,
+  },
+  separator: {
+    height: spacing.lg,
   },
   card: {
     backgroundColor: colors.surface,
