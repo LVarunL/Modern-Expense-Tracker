@@ -90,6 +90,14 @@ class ConfirmResponse(APIModel):
     transactions: list[TransactionOut]
 
 
+class TransactionUpdateRequest(APIModel):
+    amount: Decimal = Field(gt=0)
+    currency: str = "INR"
+    direction: TransactionDirection
+    type: TransactionType
+    category: str
+
+
 class TransactionsResponse(APIModel):
     items: list[TransactionOut]
     total_count: int

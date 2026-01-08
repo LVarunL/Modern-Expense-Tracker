@@ -209,6 +209,98 @@ async def test_confirm_missing_entry(client) -> None:
     assert response.status_code == 404
 
 
+async def test_update_transaction_updates_fields(client, db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(
+            user_id="test-user",
+            raw_text="Seed",
+            status=EntryStatus.confirmed,
+        ),
+    )
+    entry_id = entry.id
+    transactions = await create_transactions(
+        db_session,
+        items=[
+            TransactionCreate(
+                entry_id=entry.id,
+                occurred_at=datetime(2025, 1, 10, tzinfo=timezone.utc),
+                amount=Decimal("400"),
+                currency="INR",
+                direction=TransactionDirection.outflow,
+                type=TransactionType.expense,
+                category="Food & Drinks",
+            )
+        ],
+    )
+    transaction = transactions[0]
+    transaction_id = transaction.id
+    original_occurred_at = transaction.occurred_at
+    past_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    entry.updated_at = past_time
+    await db_session.commit()
+
+    payload = {
+        "amount": 900,
+        "currency": "INR",
+        "direction": "outflow",
+        "type": "expense",
+        "category": "Transport",
+    }
+    response = await client.patch(f"/v1/transactions/{transaction.id}", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["amount"] == 900
+    assert data["category"] == "Transport"
+
+    db_session.expire_all()
+    tx_result = await db_session.execute(select(Transaction).where(Transaction.id == transaction_id))
+    updated_tx = tx_result.scalar_one()
+    assert updated_tx.amount == Decimal("900.00")
+    assert updated_tx.occurred_at == original_occurred_at
+
+    entry_result = await db_session.execute(select(Entry).where(Entry.id == entry_id))
+    updated_entry = entry_result.scalar_one()
+    updated_time = updated_entry.updated_at
+    if updated_time.tzinfo is None:
+        updated_time = updated_time.replace(tzinfo=timezone.utc)
+    assert updated_time > past_time
+
+
+async def test_update_transaction_requires_confirmed_entry(client, db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(
+            user_id="test-user",
+            raw_text="Pending",
+            status=EntryStatus.pending_confirmation,
+        ),
+    )
+    transactions = await create_transactions(
+        db_session,
+        items=[
+            TransactionCreate(
+                entry_id=entry.id,
+                occurred_at=datetime(2025, 1, 10, tzinfo=timezone.utc),
+                amount=Decimal("400"),
+                currency="INR",
+                direction=TransactionDirection.outflow,
+                type=TransactionType.expense,
+                category="Food & Drinks",
+            )
+        ],
+    )
+    payload = {
+        "amount": 550,
+        "currency": "INR",
+        "direction": "outflow",
+        "type": "expense",
+        "category": "Food & Drinks",
+    }
+    response = await client.patch(f"/v1/transactions/{transactions[0].id}", json=payload)
+    assert response.status_code == 409
+
+
 async def test_list_transactions_filters_and_paginates(client, db_session) -> None:
     entry = await create_entry(
         db_session,

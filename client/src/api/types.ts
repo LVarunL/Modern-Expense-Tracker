@@ -62,6 +62,14 @@ export interface TransactionOut {
   assumptions_json?: string[] | null;
 }
 
+export interface TransactionUpdateRequest {
+  amount: number;
+  currency: string;
+  direction: TransactionDirection;
+  type: TransactionType;
+  category: string;
+}
+
 export interface EntryOut {
   id: number;
   raw_text: string;

@@ -5,6 +5,8 @@ import type {
   ParseRequest,
   ParseResponse,
   SummaryResponse,
+  TransactionOut,
+  TransactionUpdateRequest,
   TransactionsResponse,
 } from './types';
 
@@ -48,4 +50,14 @@ export function fetchTransactions(params?: {
 export function fetchSummary(month: string): Promise<SummaryResponse> {
   const query = new URLSearchParams({ month });
   return request<SummaryResponse>(`/v1/summary?${query.toString()}`);
+}
+
+export function updateTransaction(
+  transactionId: number,
+  payload: TransactionUpdateRequest,
+): Promise<TransactionOut> {
+  return request(`/v1/transactions/${transactionId}`, {
+    method: 'PATCH',
+    body: payload,
+  });
 }

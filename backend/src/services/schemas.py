@@ -31,3 +31,12 @@ class TransactionCreate:
     type: TransactionType
     category: str
     assumptions_json: dict[str, Any] | list[str] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class TransactionUpdate:
+    amount: Decimal
+    currency: str
+    direction: TransactionDirection
+    type: TransactionType
+    category: str

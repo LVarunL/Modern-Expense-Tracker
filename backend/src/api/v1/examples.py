@@ -102,6 +102,38 @@ CONFIRM_RESPONSE_EXAMPLES = {
     }
 }
 
+TRANSACTION_UPDATE_REQUEST_EXAMPLES = {
+    "default": {
+        "summary": "Update a transaction",
+        "value": {
+            "amount": 750,
+            "currency": "INR",
+            "direction": "outflow",
+            "type": "expense",
+            "category": "Food & Drinks",
+        },
+    }
+}
+
+TRANSACTION_UPDATE_RESPONSE_EXAMPLES = {
+    "default": {
+        "summary": "Updated transaction response",
+        "value": {
+            "id": 101,
+            "entry_id": 42,
+            "occurred_time": "2025-01-10T19:30:00+05:30",
+            "created_time": "2025-01-10T19:35:00+05:30",
+            "modified_time": "2025-01-10T19:40:00+05:30",
+            "amount": 750,
+            "currency": "INR",
+            "direction": "outflow",
+            "type": "expense",
+            "category": "Food & Drinks",
+            "assumptions_json": [],
+        },
+    }
+}
+
 TRANSACTIONS_RESPONSE_EXAMPLES = {
     "default": {
         "summary": "Transaction list response",

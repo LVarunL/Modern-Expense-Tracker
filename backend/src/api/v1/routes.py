@@ -17,12 +17,16 @@ from src.models.transaction import Transaction
 from src.services import (
     EntryCreate,
     TransactionCreate,
+    TransactionUpdate,
     create_entry,
     create_transactions,
     get_entry,
+    get_transaction,
     list_transactions as list_transactions_service,
     soft_delete_transactions_for_entry,
+    touch_entry,
     update_entry_status,
+    update_transaction,
 )
 from src.api.v1.examples import (
     CONFIRM_REQUEST_EXAMPLES,
@@ -30,6 +34,8 @@ from src.api.v1.examples import (
     PARSE_REQUEST_EXAMPLES,
     PARSE_RESPONSE_EXAMPLES,
     SUMMARY_RESPONSE_EXAMPLES,
+    TRANSACTION_UPDATE_REQUEST_EXAMPLES,
+    TRANSACTION_UPDATE_RESPONSE_EXAMPLES,
     TRANSACTIONS_RESPONSE_EXAMPLES,
 )
 from src.parser.service import LLMParser, ParserError, get_parser
@@ -41,6 +47,8 @@ from src.api.v1.schemas import (
     ParseRequest,
     ParseResponse,
     SummaryResponse,
+    TransactionOut,
+    TransactionUpdateRequest,
     TransactionsResponse,
     date_range,
     month_range,
@@ -191,6 +199,64 @@ async def confirm_entry(
             await session.refresh(transaction)
 
     return ConfirmResponse(entry=entry, transactions=transactions)
+
+
+@router.patch(
+    "/transactions/{transaction_id}",
+    response_model=TransactionOut,
+    responses={
+        200: {
+            "content": {
+                "application/json": {"examples": TRANSACTION_UPDATE_RESPONSE_EXAMPLES}
+            },
+        }
+    },
+    tags=["transactions"],
+)
+async def update_transaction_route(
+    transaction_id: int,
+    payload: TransactionUpdateRequest = Body(
+        ..., examples=TRANSACTION_UPDATE_REQUEST_EXAMPLES
+    ),
+    session: AsyncSession = Depends(get_session),
+) -> TransactionOut:
+    settings = get_settings()
+    async with session.begin():
+        transaction = await get_transaction(session, transaction_id=transaction_id)
+        if not transaction:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transaction not found",
+            )
+        entry = await get_entry(session, transaction.entry_id)
+        if not entry or entry.user_id != settings.default_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transaction not found",
+            )
+        if entry.status != EntryStatus.confirmed:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Transaction can only be edited after confirmation",
+            )
+        updated = await update_transaction(
+            session,
+            transaction=transaction,
+            update=TransactionUpdate(
+                amount=payload.amount,
+                currency=payload.currency,
+                direction=payload.direction,
+                type=payload.type,
+                category=payload.category,
+            ),
+            commit=False,
+        )
+        await touch_entry(session, entry=entry, commit=False)
+        await session.flush()
+        await session.refresh(updated)
+        response = TransactionOut.model_validate(updated)
+
+    return response
 
 
 @router.get(

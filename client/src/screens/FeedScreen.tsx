@@ -1,6 +1,8 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { useEffect, useState } from 'react';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -9,7 +11,7 @@ import type { TransactionOut } from '../api/types';
 import { GhostButton } from '../components/GhostButton';
 import { Screen } from '../components/Screen';
 import { TRANSACTION_TYPE_LABELS } from '../constants/transactions';
-import type { TabParamList } from '../navigation/types';
+import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -17,8 +19,13 @@ import { formatCurrency, formatDateTime } from '../utils/format';
 
 const FEED_LIMIT = 50;
 
+type FeedNavigation = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
 export function FeedScreen() {
-  const navigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
+  const navigation = useNavigation<FeedNavigation>();
   const [items, setItems] = useState<TransactionOut[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +44,11 @@ export function FeedScreen() {
     }
   };
 
-  useEffect(() => {
-    void loadTransactions();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      void loadTransactions();
+    }, []),
+  );
 
   return (
     <Screen>
@@ -76,21 +85,30 @@ export function FeedScreen() {
               const title = item.category;
               const subtitle = TRANSACTION_TYPE_LABELS[item.type] ?? item.type;
               return (
-                <View key={item.id} style={styles.card}>
+                <Pressable
+                  key={item.id}
+                  style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                  onPress={() =>
+                    navigation.navigate('EditTransactionModal', { transaction: item })
+                  }
+                >
                   <View style={styles.cardTop}>
                     <Text style={styles.cardTitle}>{title}</Text>
-                    <Text
-                      style={[
-                        styles.amount,
-                        item.direction === 'inflow' && styles.amountInflow,
-                      ]}
-                    >
-                      {formatCurrency(item.amount, item.direction)}
-                    </Text>
+                    <View style={styles.cardTopRight}>
+                      <Text
+                        style={[
+                          styles.amount,
+                          item.direction === 'inflow' && styles.amountInflow,
+                        ]}
+                      >
+                        {formatCurrency(item.amount, item.direction)}
+                      </Text>
+                      <Text style={styles.editHint}>Edit</Text>
+                    </View>
                   </View>
                   <Text style={styles.cardSubtitle}>{subtitle}</Text>
                   <Text style={styles.cardMeta}>{formatDateTime(item.occurred_time)}</Text>
-                </View>
+                </Pressable>
               );
             })
           : null}
@@ -134,12 +152,20 @@ const styles = StyleSheet.create({
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  cardTopRight: {
+    alignItems: 'flex-end',
+    gap: 4,
   },
   cardTitle: {
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.size.lg,
     color: colors.ink,
+  },
+  cardPressed: {
+    transform: [{ scale: 0.99 }],
+    opacity: 0.9,
   },
   amount: {
     fontFamily: typography.fontFamily.semibold,
@@ -158,6 +184,11 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.sm,
     color: colors.steel,
+  },
+  editHint: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.size.xs,
+    color: colors.cobalt,
   },
   stateCard: {
     backgroundColor: colors.surface,

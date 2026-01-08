@@ -54,6 +54,17 @@ Or:
 make test
 ```
 
+## Debugging test failures (ORM state)
+
+If a test reads stale data after hitting an API endpoint, it is usually the SQLAlchemy identity map.
+The API uses a different session, so the test session can keep an old object cached.
+
+Quick checks:
+
+- Re-query using a fresh session, or call `db_session.expire_all()` before the query.
+- If you already have an instance, call `await db_session.refresh(instance)` to reload it.
+- Avoid mixing in-memory objects created in the test with updates performed by the API without a refresh.
+
 ## OpenAPI docs
 
 When the server is running:

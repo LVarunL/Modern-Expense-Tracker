@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,6 +49,21 @@ async def update_entry_status(
     commit: bool = True,
 ) -> Entry:
     entry.status = status
+    if commit:
+        await session.commit()
+        await session.refresh(entry)
+    else:
+        await session.flush()
+    return entry
+
+
+async def touch_entry(
+    session: AsyncSession,
+    *,
+    entry: Entry,
+    commit: bool = True,
+) -> Entry:
+    entry.updated_at = datetime.now(timezone.utc)
     if commit:
         await session.commit()
         await session.refresh(entry)

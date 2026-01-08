@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
 from src.models.transaction import Transaction
-from src.services.schemas import TransactionCreate
+from src.services.schemas import TransactionCreate, TransactionUpdate
 
 
 async def create_transactions(
@@ -70,6 +70,40 @@ async def list_transactions_for_entry(
     )
     result = await session.execute(query)
     return list(result.scalars())
+
+
+async def get_transaction(
+    session: AsyncSession,
+    *,
+    transaction_id: int,
+) -> Transaction | None:
+    result = await session.execute(
+        select(Transaction).where(
+            Transaction.id == transaction_id,
+            Transaction.is_deleted.is_(False),
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def update_transaction(
+    session: AsyncSession,
+    *,
+    transaction: Transaction,
+    update: TransactionUpdate,
+    commit: bool = True,
+) -> Transaction:
+    transaction.amount = update.amount
+    transaction.currency = update.currency
+    transaction.direction = update.direction
+    transaction.type = update.type
+    transaction.category = update.category
+    if commit:
+        await session.commit()
+        await session.refresh(transaction)
+    else:
+        await session.flush()
+    return transaction
 
 
 async def soft_delete_transactions_for_entry(

@@ -1,10 +1,13 @@
-import type { ParseResponse } from '../api/types';
+import type { ParseResponse, TransactionOut } from '../api/types';
 
 export type RootStackParamList = {
   MainTabs: undefined;
   PreviewModal: {
     preview: ParseResponse;
     rawText: string;
+  };
+  EditTransactionModal: {
+    transaction: TransactionOut;
   };
 };
 

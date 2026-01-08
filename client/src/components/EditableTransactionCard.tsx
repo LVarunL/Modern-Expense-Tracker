@@ -27,6 +27,9 @@ interface EditableTransactionCardProps {
   onUpdate: (updates: Partial<EditableTransaction>) => void;
   onRemove: () => void;
   onRestore: () => void;
+  allowRemove?: boolean;
+  showCurrency?: boolean;
+  title?: string;
 }
 
 export function EditableTransactionCard({
@@ -39,19 +42,26 @@ export function EditableTransactionCard({
   onUpdate,
   onRemove,
   onRestore,
+  allowRemove = true,
+  showCurrency = false,
+  title,
 }: EditableTransactionCardProps) {
+  const headerTitle = title ?? `Transaction ${index + 1}`;
+
   return (
     <View style={[styles.card, item.isDeleted && styles.cardDeleted]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Transaction {index + 1}</Text>
-        <Pressable
-          onPress={item.isDeleted ? onRestore : onRemove}
-          style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
-        >
-          <Text style={[styles.actionText, item.isDeleted && styles.restoreText]}>
-            {item.isDeleted ? 'Undo' : 'Remove'}
-          </Text>
-        </Pressable>
+        <Text style={styles.headerTitle}>{headerTitle}</Text>
+        {allowRemove ? (
+          <Pressable
+            onPress={item.isDeleted ? onRestore : onRemove}
+            style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
+          >
+            <Text style={[styles.actionText, item.isDeleted && styles.restoreText]}>
+              {item.isDeleted ? 'Undo' : 'Remove'}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {item.isDeleted ? (
@@ -73,6 +83,27 @@ export function EditableTransactionCard({
             </View>
           </View>
           {amountError ? <Text style={styles.errorText}>{amountError}</Text> : null}
+
+          {showCurrency ? (
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Currency</Text>
+              <View style={styles.textInput}>
+                <TextInput
+                  value={item.currency}
+                  onChangeText={(value) =>
+                    onUpdate({
+                      currency: value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3),
+                    })
+                  }
+                  autoCapitalize="characters"
+                  placeholder="INR"
+                  placeholderTextColor={colors.steel}
+                  style={styles.amountText}
+                  maxLength={3}
+                />
+              </View>
+            </View>
+          ) : null}
 
           <View style={styles.fieldRow}>
             <Text style={styles.fieldLabel}>Category</Text>
@@ -204,6 +235,14 @@ const styles = StyleSheet.create({
   },
   amountInputError: {
     borderColor: colors.danger,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: colors.divider,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#F9FAFB',
   },
   currency: {
     fontFamily: typography.fontFamily.semibold,
