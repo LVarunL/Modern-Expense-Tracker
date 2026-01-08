@@ -6,8 +6,10 @@ import type {
   ParseResponse,
   SortOrder,
   SummaryResponse,
+  TransactionDirection,
   TransactionOut,
   TransactionSortField,
+  TransactionType,
   TransactionUpdateRequest,
   TransactionsResponse,
 } from "./types";
@@ -35,6 +37,11 @@ export function fetchTransactions(params?: {
   offset?: number;
   sort_by?: TransactionSortField;
   sort_order?: SortOrder;
+  direction?: TransactionDirection;
+  type?: TransactionType[];
+  category?: string[];
+  min_amount?: number;
+  max_amount?: number;
 }): Promise<TransactionsResponse> {
   const query = new URLSearchParams();
   if (params?.from) {
@@ -54,6 +61,21 @@ export function fetchTransactions(params?: {
   }
   if (params?.sort_order) {
     query.set("sort_order", params.sort_order);
+  }
+  if (params?.direction) {
+    query.set("direction", params.direction);
+  }
+  if (params?.type?.length) {
+    params.type.forEach((value) => query.append("type", value));
+  }
+  if (params?.category?.length) {
+    params.category.forEach((value) => query.append("category", value));
+  }
+  if (typeof params?.min_amount === "number") {
+    query.set("min_amount", String(params.min_amount));
+  }
+  if (typeof params?.max_amount === "number") {
+    query.set("max_amount", String(params.max_amount));
   }
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return request<TransactionsResponse>(`/v1/transactions${suffix}`);

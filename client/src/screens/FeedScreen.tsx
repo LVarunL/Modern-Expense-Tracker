@@ -18,9 +18,11 @@ import {
 } from "../constants/sorting";
 import { TRANSACTION_TYPE_LABELS } from "../constants/transactions";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
+import { useFeedFilters } from "../state/feedFilters";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
+import { buildFeedQueryFilters, countActiveFilters } from "../utils/filters";
 import { formatCurrency, formatDateTime } from "../utils/format";
 
 const FEED_PAGINATION_SIZE = 50;
@@ -32,6 +34,7 @@ type FeedNavigation = CompositeNavigationProp<
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNavigation>();
+  const { filters } = useFeedFilters();
   const [sortId, setSortId] = useState<TransactionSortId>(
     TRANSACTION_SORT_OPTIONS[0].id
   );
@@ -41,6 +44,7 @@ export function FeedScreen() {
       TRANSACTION_SORT_OPTIONS[0],
     [sortId]
   );
+  const queryFilters = useMemo(() => buildFeedQueryFilters(filters), [filters]);
   const query = useInfiniteQuery({
     queryKey: [
       "transactions",
@@ -48,6 +52,7 @@ export function FeedScreen() {
         limit: FEED_PAGINATION_SIZE,
         sort_by: sortOption.sort_by,
         sort_order: sortOption.sort_order,
+        filters: queryFilters,
       },
     ],
     initialPageParam: 0,
@@ -57,6 +62,7 @@ export function FeedScreen() {
         offset: pageParam,
         sort_by: sortOption.sort_by,
         sort_order: sortOption.sort_order,
+        ...queryFilters,
       }),
     getNextPageParam: (lastPage, allPages) => {
       const nextOffset = allPages.length * FEED_PAGINATION_SIZE;
@@ -71,6 +77,7 @@ export function FeedScreen() {
   const showErrorState = Boolean(error) && items.length === 0;
   const showEmptyState = !isLoading && !error && items.length === 0;
   const showFooterError = Boolean(error) && items.length > 0;
+  const activeFilterCount = countActiveFilters(filters);
 
   return (
     <Screen>
@@ -125,11 +132,29 @@ export function FeedScreen() {
         onRefresh={() => query.refetch()}
         ListHeaderComponent={
           <View style={styles.headerWrapper}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Feed</Text>
-              <Text style={styles.subtitle}>
-                Latest transactions across categories.
-              </Text>
+            <View style={styles.headerRow}>
+              <View style={styles.header}>
+                <Text style={styles.title}>Feed</Text>
+                <Text style={styles.subtitle}>
+                  Latest transactions across categories.
+                </Text>
+              </View>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.filterButton,
+                  pressed && styles.filterButtonPressed,
+                ]}
+                onPress={() => navigation.navigate("FilterModal")}
+              >
+                <Ionicons
+                  name="options-outline"
+                  size={18}
+                  color={colors.cobalt}
+                />
+                <Text style={styles.filterText}>
+                  Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+                </Text>
+              </Pressable>
             </View>
             <ChoiceChips
               label="Sort by"
@@ -209,6 +234,12 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     paddingBottom: spacing.lg,
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
   header: {
     paddingTop: spacing.xxl,
     gap: spacing.sm,
@@ -222,6 +253,26 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.size.md,
     color: colors.slate,
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.cobalt,
+    backgroundColor: "#EFF4FF",
+    marginTop: spacing.xxl,
+  },
+  filterButtonPressed: {
+    opacity: 0.85,
+  },
+  filterText: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.size.sm,
+    color: colors.cobalt,
   },
   list: {
     paddingBottom: 140,

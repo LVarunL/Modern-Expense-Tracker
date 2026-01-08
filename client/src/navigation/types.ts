@@ -9,6 +9,7 @@ export type RootStackParamList = {
   EditTransactionModal: {
     transaction: TransactionOut;
   };
+  FilterModal: undefined;
 };
 
 export type TabParamList = {

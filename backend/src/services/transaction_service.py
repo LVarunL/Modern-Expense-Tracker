@@ -11,7 +11,8 @@ from sqlalchemy.sql import func
 from src.models.transaction import Transaction
 from enum import Enum
 
-from src.services.fields import FieldSpec, sortable_field_map
+from src.services.fields import FieldSpec, filterable_field_map, sortable_field_map
+from src.services.filtering import FilterClause, apply_filters
 from src.services.pagination import PaginationParams, paginate_query
 from src.services.sorting import SortOrder, SortParams, apply_sort
 from src.services.schemas import TransactionCreate, TransactionUpdate
@@ -93,6 +94,7 @@ TRANSACTION_FIELDS = [
 ]
 
 TRANSACTION_SORT_FIELDS = sortable_field_map(TRANSACTION_FIELDS)
+TRANSACTION_FILTER_FIELDS = filterable_field_map(TRANSACTION_FIELDS)
 TRANSACTION_DEFAULT_SORT = SortParams(
     field=TransactionField.occurred_time,
     order=SortOrder.desc,
@@ -127,6 +129,12 @@ def _normalize_transaction_sort(
     return sort
 
 
+def _normalize_transaction_filters(
+    filters: list[FilterClause[TransactionField]] | None,
+) -> list[FilterClause[TransactionField]]:
+    return filters or []
+
+
 async def list_transactions(
     session: AsyncSession,
     *,
@@ -134,6 +142,7 @@ async def list_transactions(
     to_date: datetime | None = None,
     pagination: PaginationParams = PaginationParams(),
     sort: SortParams[TransactionField] | None = None,
+    filters: list[FilterClause[TransactionField]] | None = None,
 ) -> list[Transaction]:
     items, _ = await list_transactions_paginated(
         session,
@@ -141,6 +150,7 @@ async def list_transactions(
         to_date=to_date,
         pagination=pagination,
         sort=sort,
+        filters=filters,
     )
     return items
 
@@ -152,10 +162,23 @@ async def list_transactions_paginated(
     to_date: datetime | None = None,
     pagination: PaginationParams = PaginationParams(),
     sort: SortParams[TransactionField] | None = None,
+    filters: list[FilterClause[TransactionField]] | None = None,
 ) -> tuple[list[Transaction], int]:
-    filters = _transaction_filters(from_date=from_date, to_date=to_date)
-    items_query = select(Transaction).where(*filters)
-    count_query = select(func.count(Transaction.id)).where(*filters)
+    base_filters = _transaction_filters(from_date=from_date, to_date=to_date)
+    items_query = select(Transaction).where(*base_filters)
+    count_query = select(func.count(Transaction.id)).where(*base_filters)
+    transaction_filters = _normalize_transaction_filters(filters)
+    if transaction_filters:
+        items_query = apply_filters(
+            items_query,
+            filters=transaction_filters,
+            fields=TRANSACTION_FILTER_FIELDS,
+        )
+        count_query = apply_filters(
+            count_query,
+            filters=transaction_filters,
+            fields=TRANSACTION_FILTER_FIELDS,
+        )
     sort_params = _normalize_transaction_sort(sort)
     items_query = apply_sort(
         items_query,

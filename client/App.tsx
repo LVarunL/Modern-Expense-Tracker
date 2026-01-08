@@ -17,6 +17,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { queryClient } from "./src/queryClient";
+import { FeedFiltersProvider } from "./src/state/feedFilters";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -46,10 +47,12 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <NavigationContainer>
-            <StatusBar style="dark" />
-            <RootNavigator />
-          </NavigationContainer>
+          <FeedFiltersProvider>
+            <NavigationContainer>
+              <StatusBar style="dark" />
+              <RootNavigator />
+            </NavigationContainer>
+          </FeedFiltersProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

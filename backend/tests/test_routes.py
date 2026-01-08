@@ -396,6 +396,95 @@ async def test_list_transactions_supports_sorting(client, db_session) -> None:
     assert data["items"][2]["amount"] == 900
 
 
+async def test_list_transactions_filters_by_direction_and_type(client, db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(user_id="test-user", raw_text="Filter seed"),
+    )
+    items = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 2, 1, tzinfo=timezone.utc),
+            amount=Decimal("300"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 2, 2, tzinfo=timezone.utc),
+            amount=Decimal("800"),
+            currency="INR",
+            direction=TransactionDirection.inflow,
+            type=TransactionType.income,
+            category="Income",
+        ),
+    ]
+    await create_transactions(db_session, items=items)
+
+    response = await client.get(
+        "/v1/transactions",
+        params={"direction": "inflow", "type": ["income"]},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_count"] == 1
+    assert data["items"][0]["direction"] == "inflow"
+    assert data["items"][0]["type"] == "income"
+
+
+async def test_list_transactions_filters_by_category_and_amount(client, db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(user_id="test-user", raw_text="Filter seed"),
+    )
+    items = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 3, 1, tzinfo=timezone.utc),
+            amount=Decimal("120"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Transport",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 3, 2, tzinfo=timezone.utc),
+            amount=Decimal("650"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 3, 3, tzinfo=timezone.utc),
+            amount=Decimal("900"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+    ]
+    await create_transactions(db_session, items=items)
+
+    response = await client.get(
+        "/v1/transactions",
+        params={
+            "category": ["Food & Drinks"],
+            "min_amount": 500,
+            "max_amount": 800,
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_count"] == 1
+    assert data["items"][0]["amount"] == 650
+    assert data["items"][0]["category"] == "Food & Drinks"
+
+
 async def test_list_transactions_rejects_invalid_sort(client) -> None:
     response = await client.get(
         "/v1/transactions",

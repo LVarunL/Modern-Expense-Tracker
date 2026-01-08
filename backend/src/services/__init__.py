@@ -8,6 +8,7 @@ from src.services.entry_service import (
 from src.services.pagination import PaginationParams
 from src.services.schemas import EntryCreate, TransactionCreate, TransactionUpdate
 from src.services.fields import FieldSpec
+from src.services.filtering import FilterClause, FilterOperator
 from src.services.sorting import SortOrder, SortParams
 from src.services.transaction_service import (
     TransactionField,
@@ -41,4 +42,6 @@ __all__ = [
     "SortParams",
     "FieldSpec",
     "TransactionField",
+    "FilterClause",
+    "FilterOperator",
 ]

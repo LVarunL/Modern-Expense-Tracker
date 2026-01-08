@@ -7,6 +7,8 @@ from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.services import (
     EntryCreate,
     PaginationParams,
+    FilterClause,
+    FilterOperator,
     SortOrder,
     SortParams,
     TransactionCreate,
@@ -159,6 +161,48 @@ async def test_list_transactions_paginated_sorts_by_amount(db_session) -> None:
     assert total >= 2
     assert items[0].amount == Decimal("300.00")
     assert items[1].amount == Decimal("700.00")
+
+
+async def test_list_transactions_paginated_filters_by_category(db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(user_id="test-user", raw_text="Filter"),
+    )
+    transactions = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 4, 1, tzinfo=timezone.utc),
+            amount=Decimal("250"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Transport",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 4, 2, tzinfo=timezone.utc),
+            amount=Decimal("450"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+    ]
+    await create_transactions(db_session, items=transactions)
+
+    items, total = await list_transactions_paginated(
+        db_session,
+        pagination=PaginationParams(limit=10, offset=0),
+        filters=[
+            FilterClause(
+                field=TransactionField.category,
+                operator=FilterOperator.in_,
+                value=["Food & Drinks"],
+            )
+        ],
+    )
+    assert total >= 1
+    assert all(item.category == "Food & Drinks" for item in items)
 
 
 async def test_update_transaction_fields(db_session) -> None:

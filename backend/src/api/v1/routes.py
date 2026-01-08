@@ -16,6 +16,7 @@ from src.models.enums import EntryStatus, TransactionDirection
 from src.models.transaction import Transaction
 from src.services import (
     EntryCreate,
+    FilterClause,
     TransactionCreate,
     TransactionUpdate,
     create_entry,
@@ -40,6 +41,7 @@ from src.api.v1.examples import (
     TRANSACTIONS_RESPONSE_EXAMPLES,
 )
 from src.parser.service import LLMParser, ParserError, get_parser
+from src.api.v1.filters import get_transaction_filters
 from src.api.v1.pagination import build_paginated_response, get_pagination
 from src.api.v1.sorting import build_sort_dependency
 from src.services.pagination import PaginationParams
@@ -293,6 +295,7 @@ async def list_transactions(
     to_date: date | None = Query(default=None, alias="to"),
     pagination: PaginationParams = Depends(get_pagination),
     sort: SortParams[TransactionField] = Depends(transaction_sort_dependency),
+    filters: list[FilterClause[TransactionField]] = Depends(get_transaction_filters),
     session: AsyncSession = Depends(get_session),
 ) -> TransactionsResponse:
     start, end = date_range(from_date, to_date)
@@ -302,6 +305,7 @@ async def list_transactions(
         to_date=end,
         pagination=pagination,
         sort=sort,
+        filters=filters,
     )
     return TransactionsResponse(
         **build_paginated_response(

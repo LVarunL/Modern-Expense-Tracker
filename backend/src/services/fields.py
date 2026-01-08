@@ -22,3 +22,7 @@ class FieldSpec(Generic[TField]):
 
 def sortable_field_map(fields: list[FieldSpec[TField]]) -> dict[TField, ColumnElement]:
     return {field.id: field.column for field in fields if field.sortable}
+
+
+def filterable_field_map(fields: list[FieldSpec[TField]]) -> dict[TField, ColumnElement]:
+    return {field.id: field.column for field in fields if field.filterable}
