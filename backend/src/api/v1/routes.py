@@ -24,6 +24,7 @@ from src.services import (
     get_transaction,
     list_transactions_paginated,
     soft_delete_transactions_for_entry,
+    SortParams,
     touch_entry,
     update_entry_status,
     update_transaction,
@@ -40,7 +41,13 @@ from src.api.v1.examples import (
 )
 from src.parser.service import LLMParser, ParserError, get_parser
 from src.api.v1.pagination import build_paginated_response, get_pagination
+from src.api.v1.sorting import build_sort_dependency
 from src.services.pagination import PaginationParams
+from src.services.transaction_service import (
+    TRANSACTION_DEFAULT_SORT,
+    TRANSACTION_SORT_FIELDS,
+    TransactionField,
+)
 from src.api.v1.schemas import (
     CategorySummary,
     ConfirmRequest,
@@ -57,6 +64,16 @@ from src.api.v1.schemas import (
 )
 
 router = APIRouter()
+
+transaction_sort_dependency = build_sort_dependency(
+    sort_enum=TransactionField,
+    allowed_fields=sorted(
+        TRANSACTION_SORT_FIELDS.keys(),
+        key=lambda field: field.value,
+    ),
+    default_field=TRANSACTION_DEFAULT_SORT.field,
+    default_order=TRANSACTION_DEFAULT_SORT.order,
+)
 
 
 @router.get("/health", tags=["health"])
@@ -275,6 +292,7 @@ async def list_transactions(
     from_date: date | None = Query(default=None, alias="from"),
     to_date: date | None = Query(default=None, alias="to"),
     pagination: PaginationParams = Depends(get_pagination),
+    sort: SortParams[TransactionField] = Depends(transaction_sort_dependency),
     session: AsyncSession = Depends(get_session),
 ) -> TransactionsResponse:
     start, end = date_range(from_date, to_date)
@@ -283,6 +301,7 @@ async def list_transactions(
         from_date=start,
         to_date=end,
         pagination=pagination,
+        sort=sort,
     )
     return TransactionsResponse(
         **build_paginated_response(

@@ -7,7 +7,10 @@ from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.services import (
     EntryCreate,
     PaginationParams,
+    SortOrder,
+    SortParams,
     TransactionCreate,
+    TransactionField,
     TransactionUpdate,
     create_entry,
     create_transactions,
@@ -119,6 +122,43 @@ async def test_list_transactions_paginated_returns_count(db_session) -> None:
     assert len(items) == 2
     assert items[0].amount == Decimal("100.00")
     assert items[1].amount == Decimal("200.00")
+
+
+async def test_list_transactions_paginated_sorts_by_amount(db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(user_id="test-user", raw_text="Sort"),
+    )
+    transactions = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 3, tzinfo=timezone.utc),
+            amount=Decimal("700"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 2, tzinfo=timezone.utc),
+            amount=Decimal("300"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Transport",
+        ),
+    ]
+    await create_transactions(db_session, items=transactions)
+
+    items, total = await list_transactions_paginated(
+        db_session,
+        pagination=PaginationParams(limit=10, offset=0),
+        sort=SortParams(field=TransactionField.amount, order=SortOrder.asc),
+    )
+    assert total >= 2
+    assert items[0].amount == Decimal("300.00")
+    assert items[1].amount == Decimal("700.00")
 
 
 async def test_update_transaction_fields(db_session) -> None:

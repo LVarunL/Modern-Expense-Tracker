@@ -349,6 +349,61 @@ async def test_list_transactions_filters_and_paginates(client, db_session) -> No
     assert data["items"][1]["amount"] == 200
 
 
+async def test_list_transactions_supports_sorting(client, db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(user_id="test-user", raw_text="Sort seed"),
+    )
+    items = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 10, tzinfo=timezone.utc),
+            amount=Decimal("500"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Transport",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 9, tzinfo=timezone.utc),
+            amount=Decimal("150"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 8, tzinfo=timezone.utc),
+            amount=Decimal("900"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Shopping",
+        ),
+    ]
+    await create_transactions(db_session, items=items)
+
+    response = await client.get(
+        "/v1/transactions",
+        params={"sort_by": "amount", "sort_order": "asc"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["items"][0]["amount"] == 150
+    assert data["items"][1]["amount"] == 500
+    assert data["items"][2]["amount"] == 900
+
+
+async def test_list_transactions_rejects_invalid_sort(client) -> None:
+    response = await client.get(
+        "/v1/transactions",
+        params={"sort_by": "invalid_field", "sort_order": "asc"},
+    )
+    assert response.status_code == 400
+
+
 async def test_summary_returns_totals_and_categories(client, db_session) -> None:
     entry = await create_entry(
         db_session,

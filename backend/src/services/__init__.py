@@ -7,7 +7,10 @@ from src.services.entry_service import (
 )
 from src.services.pagination import PaginationParams
 from src.services.schemas import EntryCreate, TransactionCreate, TransactionUpdate
+from src.services.fields import FieldSpec
+from src.services.sorting import SortOrder, SortParams
 from src.services.transaction_service import (
+    TransactionField,
     create_transactions,
     get_transaction,
     list_transactions,
@@ -34,4 +37,8 @@ __all__ = [
     "TransactionCreate",
     "TransactionUpdate",
     "PaginationParams",
+    "SortOrder",
+    "SortParams",
+    "FieldSpec",
+    "TransactionField",
 ]

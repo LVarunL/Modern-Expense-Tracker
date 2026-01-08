@@ -4,12 +4,18 @@ import type { CompositeNavigationProp } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { fetchTransactions, getErrorMessage } from "../api";
 import type { TransactionOut } from "../api/types";
+import { ChoiceChips } from "../components/ChoiceChips";
 import { GhostButton } from "../components/GhostButton";
 import { Screen } from "../components/Screen";
+import {
+  TRANSACTION_SORT_OPTIONS,
+  TransactionSortId,
+} from "../constants/sorting";
 import { TRANSACTION_TYPE_LABELS } from "../constants/transactions";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
@@ -17,7 +23,7 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 import { formatCurrency, formatDateTime } from "../utils/format";
 
-const FEED_PAGINATION_SIZE = 10;
+const FEED_PAGINATION_SIZE = 50;
 
 type FeedNavigation = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList>,
@@ -26,11 +32,32 @@ type FeedNavigation = CompositeNavigationProp<
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNavigation>();
+  const [sortId, setSortId] = useState<TransactionSortId>(
+    TRANSACTION_SORT_OPTIONS[0].id
+  );
+  const sortOption = useMemo(
+    () =>
+      TRANSACTION_SORT_OPTIONS.find((option) => option.id === sortId) ??
+      TRANSACTION_SORT_OPTIONS[0],
+    [sortId]
+  );
   const query = useInfiniteQuery({
-    queryKey: ["transactions", { limit: FEED_PAGINATION_SIZE }],
+    queryKey: [
+      "transactions",
+      {
+        limit: FEED_PAGINATION_SIZE,
+        sort_by: sortOption.sort_by,
+        sort_order: sortOption.sort_order,
+      },
+    ],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      fetchTransactions({ limit: FEED_PAGINATION_SIZE, offset: pageParam }),
+      fetchTransactions({
+        limit: FEED_PAGINATION_SIZE,
+        offset: pageParam,
+        sort_by: sortOption.sort_by,
+        sort_order: sortOption.sort_order,
+      }),
     getNextPageParam: (lastPage, allPages) => {
       const nextOffset = allPages.length * FEED_PAGINATION_SIZE;
       return nextOffset < lastPage.total_count ? nextOffset : undefined;
@@ -104,6 +131,12 @@ export function FeedScreen() {
                 Latest transactions across categories.
               </Text>
             </View>
+            <ChoiceChips
+              label="Sort by"
+              items={TRANSACTION_SORT_OPTIONS}
+              selectedId={sortId}
+              onSelect={setSortId}
+            />
 
             {isLoading ? (
               <View style={styles.stateCard}>

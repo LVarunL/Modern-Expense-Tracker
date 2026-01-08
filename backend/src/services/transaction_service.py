@@ -9,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
 from src.models.transaction import Transaction
+from enum import Enum
+
+from src.services.fields import FieldSpec, sortable_field_map
 from src.services.pagination import PaginationParams, paginate_query
+from src.services.sorting import SortOrder, SortParams, apply_sort
 from src.services.schemas import TransactionCreate, TransactionUpdate
 
 
@@ -42,6 +46,59 @@ async def create_transactions(
     return transactions
 
 
+class TransactionField(str, Enum):
+    occurred_time = "occurred_time"
+    amount = "amount"
+    category = "category"
+    type = "type"
+    direction = "direction"
+
+
+TRANSACTION_FIELDS = [
+    FieldSpec(
+        id=TransactionField.occurred_time,
+        column=Transaction.occurred_at,
+        sortable=True,
+        filterable=True,
+        label="Occurred time",
+    ),
+    FieldSpec(
+        id=TransactionField.amount,
+        column=Transaction.amount,
+        sortable=True,
+        filterable=True,
+        label="Amount",
+    ),
+    FieldSpec(
+        id=TransactionField.category,
+        column=Transaction.category,
+        sortable=True,
+        filterable=True,
+        label="Category",
+    ),
+    FieldSpec(
+        id=TransactionField.type,
+        column=Transaction.type,
+        sortable=False,
+        filterable=True,
+        label="Type",
+    ),
+    FieldSpec(
+        id=TransactionField.direction,
+        column=Transaction.direction,
+        sortable=False,
+        filterable=True,
+        label="Direction",
+    ),
+]
+
+TRANSACTION_SORT_FIELDS = sortable_field_map(TRANSACTION_FIELDS)
+TRANSACTION_DEFAULT_SORT = SortParams(
+    field=TransactionField.occurred_time,
+    order=SortOrder.desc,
+)
+
+
 def _transaction_filters(
     *,
     from_date: datetime | None,
@@ -55,18 +112,35 @@ def _transaction_filters(
     return filters
 
 
+def _normalize_transaction_sort(
+    sort: SortParams[TransactionField] | None,
+) -> SortParams[TransactionField]:
+    if sort is None:
+        return TRANSACTION_DEFAULT_SORT
+    if sort.field not in TRANSACTION_SORT_FIELDS:
+        allowed = ", ".join(
+            field.value for field in sorted(TRANSACTION_SORT_FIELDS, key=lambda f: f.value)
+        )
+        raise ValueError(
+            f"Unsupported sort field '{sort.field.value}'. Allowed: {allowed}."
+        )
+    return sort
+
+
 async def list_transactions(
     session: AsyncSession,
     *,
     from_date: datetime | None = None,
     to_date: datetime | None = None,
     pagination: PaginationParams = PaginationParams(),
+    sort: SortParams[TransactionField] | None = None,
 ) -> list[Transaction]:
     items, _ = await list_transactions_paginated(
         session,
         from_date=from_date,
         to_date=to_date,
         pagination=pagination,
+        sort=sort,
     )
     return items
 
@@ -77,14 +151,17 @@ async def list_transactions_paginated(
     from_date: datetime | None = None,
     to_date: datetime | None = None,
     pagination: PaginationParams = PaginationParams(),
+    sort: SortParams[TransactionField] | None = None,
 ) -> tuple[list[Transaction], int]:
     filters = _transaction_filters(from_date=from_date, to_date=to_date)
-    items_query = (
-        select(Transaction)
-        .where(*filters)
-        .order_by(Transaction.occurred_at.desc())
-    )
+    items_query = select(Transaction).where(*filters)
     count_query = select(func.count(Transaction.id)).where(*filters)
+    sort_params = _normalize_transaction_sort(sort)
+    items_query = apply_sort(
+        items_query,
+        sort=sort_params,
+        fields=TRANSACTION_SORT_FIELDS,
+    )
     return await paginate_query(
         session,
         query=items_query,

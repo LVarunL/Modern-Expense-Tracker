@@ -1,5 +1,16 @@
 export type TransactionDirection = "inflow" | "outflow";
 
+export enum SortOrder {
+  asc = "asc",
+  desc = "desc",
+}
+
+export enum TransactionSortField {
+  occurred_time = "occurred_time",
+  amount = "amount",
+  category = "category",
+}
+
 export type TransactionType =
   | "expense"
   | "income"
