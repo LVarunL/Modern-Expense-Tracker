@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -17,6 +17,16 @@ class APIModel(BaseModel):
         populate_by_name=True,
         json_encoders={Decimal: lambda value: float(value)},
     )
+
+
+TItem = TypeVar("TItem")
+
+
+class PaginatedResponse(APIModel, Generic[TItem]):
+    items: list[TItem]
+    total_count: int
+    limit: int
+    offset: int
 
 
 class ParseRequest(APIModel):
@@ -98,11 +108,8 @@ class TransactionUpdateRequest(APIModel):
     category: str
 
 
-class TransactionsResponse(APIModel):
-    items: list[TransactionOut]
-    total_count: int
-    limit: int
-    offset: int
+class TransactionsResponse(PaginatedResponse[TransactionOut]):
+    pass
 
 
 class CategorySummary(APIModel):

@@ -6,6 +6,7 @@ from decimal import Decimal
 from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.services import (
     EntryCreate,
+    PaginationParams,
     TransactionCreate,
     TransactionUpdate,
     create_entry,
@@ -13,6 +14,7 @@ from src.services import (
     get_transaction,
     list_entries,
     list_transactions,
+    list_transactions_paginated,
     soft_delete_transactions_for_entry,
     update_transaction,
     update_entry_status,
@@ -71,6 +73,52 @@ async def test_create_list_and_soft_delete_transactions(db_session) -> None:
     await soft_delete_transactions_for_entry(db_session, entry_id=entry.id)
     listed_after = await list_transactions(db_session)
     assert len(listed_after) == 0
+
+
+async def test_list_transactions_paginated_returns_count(db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(user_id="test-user", raw_text="Paged"),
+    )
+    transactions = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 3, tzinfo=timezone.utc),
+            amount=Decimal("100"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 2, tzinfo=timezone.utc),
+            amount=Decimal("200"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Transport",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            amount=Decimal("300"),
+            currency="INR",
+            direction=TransactionDirection.inflow,
+            type=TransactionType.income,
+            category="Income",
+        ),
+    ]
+    await create_transactions(db_session, items=transactions)
+
+    items, total = await list_transactions_paginated(
+        db_session,
+        pagination=PaginationParams(limit=2, offset=0),
+    )
+    assert total == 3
+    assert len(items) == 2
+    assert items[0].amount == Decimal("100.00")
+    assert items[1].amount == Decimal("200.00")
 
 
 async def test_update_transaction_fields(db_session) -> None:

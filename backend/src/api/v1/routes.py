@@ -22,7 +22,7 @@ from src.services import (
     create_transactions,
     get_entry,
     get_transaction,
-    list_transactions as list_transactions_service,
+    list_transactions_paginated,
     soft_delete_transactions_for_entry,
     touch_entry,
     update_entry_status,
@@ -39,6 +39,8 @@ from src.api.v1.examples import (
     TRANSACTIONS_RESPONSE_EXAMPLES,
 )
 from src.parser.service import LLMParser, ParserError, get_parser
+from src.api.v1.pagination import build_paginated_response, get_pagination
+from src.services.pagination import PaginationParams
 from src.api.v1.schemas import (
     CategorySummary,
     ConfirmRequest,
@@ -272,29 +274,22 @@ async def update_transaction_route(
 async def list_transactions(
     from_date: date | None = Query(default=None, alias="from"),
     to_date: date | None = Query(default=None, alias="to"),
-    limit: int = Query(default=200, ge=1, le=500),
-    offset: int = Query(default=0, ge=0),
+    pagination: PaginationParams = Depends(get_pagination),
     session: AsyncSession = Depends(get_session),
 ) -> TransactionsResponse:
     start, end = date_range(from_date, to_date)
-    items = await list_transactions_service(
+    items, total_count = await list_transactions_paginated(
         session,
         from_date=start,
         to_date=end,
-        limit=limit,
-        offset=offset,
+        pagination=pagination,
     )
-    count_query = select(func.count(Transaction.id)).where(Transaction.is_deleted.is_(False))
-    if start:
-        count_query = count_query.where(Transaction.occurred_at >= start)
-    if end:
-        count_query = count_query.where(Transaction.occurred_at <= end)
-    total_count = await session.scalar(count_query)
     return TransactionsResponse(
-        items=items,
-        total_count=int(total_count or 0),
-        limit=limit,
-        offset=offset,
+        **build_paginated_response(
+            items=items,
+            total_count=total_count,
+            pagination=pagination,
+        )
     )
 
 

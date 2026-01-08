@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
 from src.models.transaction import Transaction
+from src.services.pagination import PaginationParams, paginate_query
 from src.services.schemas import TransactionCreate, TransactionUpdate
 
 
@@ -41,22 +42,55 @@ async def create_transactions(
     return transactions
 
 
+def _transaction_filters(
+    *,
+    from_date: datetime | None,
+    to_date: datetime | None,
+) -> list:
+    filters = [Transaction.is_deleted.is_(False)]
+    if from_date:
+        filters.append(Transaction.occurred_at >= from_date)
+    if to_date:
+        filters.append(Transaction.occurred_at <= to_date)
+    return filters
+
+
 async def list_transactions(
     session: AsyncSession,
     *,
     from_date: datetime | None = None,
     to_date: datetime | None = None,
-    limit: int = 200,
-    offset: int = 0,
+    pagination: PaginationParams = PaginationParams(),
 ) -> list[Transaction]:
-    query = select(Transaction).where(Transaction.is_deleted.is_(False))
-    if from_date:
-        query = query.where(Transaction.occurred_at >= from_date)
-    if to_date:
-        query = query.where(Transaction.occurred_at <= to_date)
-    query = query.order_by(Transaction.occurred_at.desc()).limit(limit).offset(offset)
-    result = await session.execute(query)
-    return list(result.scalars())
+    items, _ = await list_transactions_paginated(
+        session,
+        from_date=from_date,
+        to_date=to_date,
+        pagination=pagination,
+    )
+    return items
+
+
+async def list_transactions_paginated(
+    session: AsyncSession,
+    *,
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
+    pagination: PaginationParams = PaginationParams(),
+) -> tuple[list[Transaction], int]:
+    filters = _transaction_filters(from_date=from_date, to_date=to_date)
+    items_query = (
+        select(Transaction)
+        .where(*filters)
+        .order_by(Transaction.occurred_at.desc())
+    )
+    count_query = select(func.count(Transaction.id)).where(*filters)
+    return await paginate_query(
+        session,
+        query=items_query,
+        count_query=count_query,
+        pagination=pagination,
+    )
 
 
 async def list_transactions_for_entry(

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.entry import Entry
 from src.models.enums import EntryStatus
+from src.services.pagination import PaginationParams
 from src.services.schemas import EntryCreate
 
 
@@ -76,10 +77,14 @@ async def list_entries(
     session: AsyncSession,
     *,
     user_id: str | None = None,
-    limit: int = 100,
-    offset: int = 0,
+    pagination: PaginationParams = PaginationParams(limit=100),
 ) -> list[Entry]:
-    query = select(Entry).order_by(Entry.created_at.desc()).limit(limit).offset(offset)
+    query = (
+        select(Entry)
+        .order_by(Entry.created_at.desc())
+        .limit(pagination.limit)
+        .offset(pagination.offset)
+    )
     if user_id:
         query = query.where(Entry.user_id == user_id)
     result = await session.execute(query)
