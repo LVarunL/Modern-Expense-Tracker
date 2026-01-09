@@ -4,14 +4,22 @@ import type { CompositeNavigationProp } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 
 import { fetchTransactions, getErrorMessage } from "../api";
 import type { TransactionOut } from "../api/types";
-import { ChoiceChips } from "../components/ChoiceChips";
 import { GhostButton } from "../components/GhostButton";
+import { PageHeader } from "../components/PageHeader";
 import { Screen } from "../components/Screen";
+import { SelectSheet } from "../components/SelectSheet";
 import {
   TRANSACTION_SORT_OPTIONS,
   TransactionSortId,
@@ -34,7 +42,12 @@ type FeedNavigation = CompositeNavigationProp<
 
 export function FeedScreen() {
   const navigation = useNavigation<FeedNavigation>();
-  const { filters } = useFeedFilters();
+  const { filters, resetFilters } = useFeedFilters();
+  const { width } = useWindowDimensions();
+  const isCompact = width < 360;
+  const listRef = useRef<FlatList<TransactionOut>>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isSortOpen, setIsSortOpen] = useState(false);
   const [sortId, setSortId] = useState<TransactionSortId>(
     TRANSACTION_SORT_OPTIONS[0].id
   );
@@ -82,6 +95,7 @@ export function FeedScreen() {
   return (
     <Screen>
       <FlatList
+        ref={listRef}
         data={items}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => {
@@ -110,18 +124,29 @@ export function FeedScreen() {
                   >
                     {formatCurrency(item.amount, item.direction)}
                   </Text>
-                  <Text style={styles.editHint}>Edit</Text>
                 </View>
               </View>
               <Text style={styles.cardSubtitle}>{subtitle}</Text>
               <Text style={styles.cardMeta}>
                 {formatDateTime(item.occurred_time)}
               </Text>
+              <View style={styles.editIcon} pointerEvents="none">
+                <Ionicons
+                  name="create-outline"
+                  size={14}
+                  color={colors.cobalt}
+                />
+              </View>
             </Pressable>
           );
         }}
         contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={true}
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) => {
+          const offsetY = event.nativeEvent.contentOffset.y;
+          setShowScrollTop(offsetY > 320);
+        }}
+        scrollEventThrottle={16}
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) {
             void query.fetchNextPage();
@@ -132,35 +157,71 @@ export function FeedScreen() {
         onRefresh={() => query.refetch()}
         ListHeaderComponent={
           <View style={styles.headerWrapper}>
-            <View style={styles.headerRow}>
+            <View
+              style={[styles.headerRow, isCompact && styles.headerRowStacked]}
+            >
               <View style={styles.header}>
-                <Text style={styles.title}>Feed</Text>
-                <Text style={styles.subtitle}>
-                  Latest transactions across categories.
-                </Text>
-              </View>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.filterButton,
-                  pressed && styles.filterButtonPressed,
-                ]}
-                onPress={() => navigation.navigate("FilterModal")}
-              >
-                <Ionicons
-                  name="options-outline"
-                  size={18}
-                  color={colors.cobalt}
+                <PageHeader
+                  title="Feed"
+                  subtitle="Latest transactions across categories."
                 />
-                <Text style={styles.filterText}>
-                  Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
-                </Text>
-              </Pressable>
+              </View>
+              <View
+                style={[
+                  styles.headerActions,
+                  isCompact && styles.headerActionsStacked,
+                ]}
+              >
+                <View style={styles.actionRow}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.iconButton,
+                      pressed && styles.iconButtonPressed,
+                    ]}
+                    onPress={() => setIsSortOpen(true)}
+                  >
+                    <Ionicons
+                      name="swap-vertical-outline"
+                      size={18}
+                      color={colors.cobalt}
+                    />
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.iconButton,
+                      pressed && styles.iconButtonPressed,
+                    ]}
+                    onPress={() => navigation.navigate("FilterModal")}
+                  >
+                    <Ionicons
+                      name="options-outline"
+                      size={18}
+                      color={colors.cobalt}
+                    />
+                  </Pressable>
+                </View>
+                {activeFilterCount ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.clearFiltersButton,
+                      pressed && styles.clearFiltersPressed,
+                    ]}
+                    onPress={resetFilters}
+                  >
+                    <Text style={styles.clearFiltersText}>
+                      Clear filters ({activeFilterCount})
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
-            <ChoiceChips
-              label="Sort by"
+            <SelectSheet
+              visible={isSortOpen}
+              title="Sort transactions"
               items={TRANSACTION_SORT_OPTIONS}
               selectedId={sortId}
               onSelect={setSortId}
+              onClose={() => setIsSortOpen(false)}
             />
 
             {isLoading ? (
@@ -219,12 +280,17 @@ export function FeedScreen() {
         initialNumToRender={0}
       />
 
-      <Pressable
-        style={styles.fab}
-        onPress={() => navigation.navigate("Capture")}
-      >
-        <Ionicons name="add" size={26} color={colors.ink} />
-      </Pressable>
+      {showScrollTop ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.scrollTopButton,
+            pressed && styles.scrollTopButtonPressed,
+          ]}
+          onPress={() => listRef.current?.scrollToOffset({ offset: 0 })}
+        >
+          <Ionicons name="arrow-up-outline" size={20} color={colors.cobalt} />
+        </Pressable>
+      ) : null}
     </Screen>
   );
 }
@@ -239,38 +305,51 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-start",
     gap: spacing.md,
+    flexWrap: "wrap",
+  },
+  headerRowStacked: {
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
   header: {
     paddingTop: spacing.xxl,
     gap: spacing.sm,
+    flex: 1,
+    minWidth: 220,
   },
-  title: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: typography.size.display,
-    color: colors.ink,
+  headerActions: {
+    alignItems: "flex-end",
+    gap: spacing.xs,
   },
-  subtitle: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.size.md,
-    color: colors.slate,
+  headerActionsStacked: {
+    alignItems: "flex-start",
   },
-  filterButton: {
+  actionRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.cobalt,
-    backgroundColor: "#EFF4FF",
-    marginTop: spacing.xxl,
+    gap: spacing.sm,
+    paddingTop: spacing.xl,
   },
-  filterButtonPressed: {
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconButtonPressed: {
     opacity: 0.85,
   },
-  filterText: {
-    fontFamily: typography.fontFamily.semibold,
+  clearFiltersButton: {
+    alignSelf: "flex-start",
+  },
+  clearFiltersPressed: {
+    opacity: 0.7,
+  },
+  clearFiltersText: {
+    fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.sm,
     color: colors.cobalt,
   },
@@ -278,29 +357,35 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
   },
   separator: {
-    height: spacing.lg,
+    height: spacing.md,
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: spacing.lg,
+    borderRadius: 16,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.divider,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   cardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    flexWrap: "wrap",
+    gap: spacing.sm,
   },
   cardTopRight: {
     alignItems: "flex-end",
     gap: 4,
+    maxWidth: "50%",
   },
   cardTitle: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.size.lg,
+    fontSize: typography.size.md,
     color: colors.ink,
+    flex: 1,
+    minWidth: 0,
+    paddingRight: spacing.sm,
   },
   cardPressed: {
     transform: [{ scale: 0.99 }],
@@ -308,7 +393,7 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.size.lg,
+    fontSize: typography.size.md,
     color: colors.danger,
   },
   amountInflow: {
@@ -316,18 +401,27 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontFamily: typography.fontFamily.regular,
-    fontSize: typography.size.sm,
+    fontSize: typography.size.xs,
     color: colors.slate,
   },
   cardMeta: {
     fontFamily: typography.fontFamily.medium,
-    fontSize: typography.size.sm,
-    color: colors.steel,
-  },
-  editHint: {
-    fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.xs,
-    color: colors.cobalt,
+    color: colors.steel,
+    paddingRight: 28,
+  },
+  editIcon: {
+    position: "absolute",
+    right: spacing.md,
+    bottom: spacing.md,
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
   },
   stateCard: {
     backgroundColor: colors.surface,
@@ -347,20 +441,25 @@ const styles = StyleSheet.create({
     fontSize: typography.size.sm,
     color: colors.slate,
   },
-  fab: {
+  scrollTopButton: {
     position: "absolute",
     right: 20,
-    bottom: 26,
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: colors.citrus,
+    bottom: 98,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.divider,
     shadowColor: colors.ink,
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  scrollTopButtonPressed: {
+    opacity: 0.85,
   },
 });

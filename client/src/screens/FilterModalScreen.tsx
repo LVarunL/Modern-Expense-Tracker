@@ -8,11 +8,13 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 
 import { ChoiceChips } from "../components/ChoiceChips";
 import { GhostButton } from "../components/GhostButton";
 import { MultiSelectChips } from "../components/MultiSelectChips";
+import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import {
@@ -41,6 +43,8 @@ export function FilterModalScreen() {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { filters, setFilters, resetFilters } = useFeedFilters();
   const animation = useEntranceAnimation(18);
+  const { width } = useWindowDimensions();
+  const isCompact = width < 360;
 
   const [draft, setDraft] = useState(filters);
   const [error, setError] = useState<string | null>(null);
@@ -123,10 +127,10 @@ export function FilterModalScreen() {
             transform: [{ translateY: animation.translateY }],
           }}
         >
-          <Text style={styles.title}>Filters</Text>
-          <Text style={styles.subtitle}>
-            Fine-tune what appears in your feed.
-          </Text>
+          <PageHeader
+            title="Filters"
+            subtitle="Fine-tune what appears in your feed."
+          />
         </Animated.View>
 
         <ChoiceChips
@@ -157,7 +161,7 @@ export function FilterModalScreen() {
           }
         />
 
-        <View style={styles.amountRow}>
+        <View style={[styles.amountRow, isCompact && styles.amountRowStacked]}>
           <View style={styles.amountField}>
             <Text style={styles.amountLabel}>Min amount</Text>
             <View style={styles.amountInput}>
@@ -220,20 +224,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
     gap: spacing.xl,
   },
-  title: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: typography.size.xxl,
-    color: colors.ink,
-  },
-  subtitle: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.size.md,
-    color: colors.slate,
-    marginTop: spacing.xs,
-  },
   amountRow: {
     flexDirection: "row",
     gap: spacing.md,
+  },
+  amountRowStacked: {
+    flexDirection: "column",
   },
   amountField: {
     flex: 1,

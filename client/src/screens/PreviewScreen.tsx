@@ -12,6 +12,7 @@ import {
   type EditableTransaction,
 } from "../components/EditableTransactionCard";
 import { GhostButton } from "../components/GhostButton";
+import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import {
@@ -146,11 +147,11 @@ export function PreviewScreen() {
             transform: [{ translateY: animation.translateY }],
           }}
         >
-          <Text style={styles.title}>Preview & Confirm</Text>
-          <Text style={styles.subtitle}>
-            {preview.entry_summary ?? rawText}
-          </Text>
-          <Text style={styles.meta}>{occurredAtLabel}</Text>
+          <PageHeader
+            title="Preview & Confirm"
+            subtitle={preview.entry_summary ?? rawText}
+            meta={occurredAtLabel}
+          />
         </Animated.View>
 
         {preview.assumptions.length ? (
@@ -216,24 +217,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xxxl,
     gap: spacing.xl,
-  },
-  title: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: typography.size.xxl,
-    color: colors.ink,
-  },
-  subtitle: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.size.md,
-    color: colors.slate,
-    marginTop: spacing.sm,
-    lineHeight: typography.lineHeight.relaxed,
-  },
-  meta: {
-    fontFamily: typography.fontFamily.medium,
-    fontSize: typography.size.sm,
-    color: colors.steel,
-    marginTop: spacing.xs,
   },
   assumptionsCard: {
     backgroundColor: "#F8F6EE",

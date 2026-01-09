@@ -14,6 +14,7 @@ import {
 import { getErrorMessage, parseEntry } from "../api";
 import type { ParseResponse } from "../api/types";
 import { InputField } from "../components/InputField";
+import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import type { RootStackParamList } from "../navigation/types";
@@ -79,12 +80,10 @@ export function CaptureScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Capture</Text>
-          <Text style={styles.subtitle}>
-            Describe your spend in one line. We will parse and preview it.
-          </Text>
-        </View>
+        <PageHeader
+          title="Capture"
+          subtitle="Describe your spend in one line. We will parse and preview it."
+        />
 
         <InputField
           value={text}
@@ -160,20 +159,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xxxl,
     gap: spacing.xl,
-  },
-  header: {
-    gap: spacing.sm,
-  },
-  title: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: typography.size.display,
-    color: colors.ink,
-  },
-  subtitle: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.size.md,
-    color: colors.slate,
-    lineHeight: typography.lineHeight.relaxed,
   },
   suggestionRow: {
     flexDirection: "row",

@@ -18,6 +18,7 @@ export const typography = {
     tight: 18,
     normal: 22,
     relaxed: 26,
+    title: 34,
     display: 42,
   },
 };

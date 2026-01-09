@@ -1,9 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 
 import { fetchSummary, getErrorMessage } from "../api";
 import { GhostButton } from "../components/GhostButton";
+import { PageHeader } from "../components/PageHeader";
 import { Screen } from "../components/Screen";
 import { StatPill } from "../components/StatPill";
 import { colors } from "../theme/colors";
@@ -30,6 +37,8 @@ function formatMonthLabel(month: string): string {
 
 export function SummaryScreen() {
   const monthParam = useMemo(() => getMonthParam(), []);
+  const { width } = useWindowDimensions();
+  const isCompact = width < 360;
   const query = useQuery({
     queryKey: ["summary", monthParam],
     queryFn: () => fetchSummary(monthParam),
@@ -47,12 +56,10 @@ export function SummaryScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Monthly Summary</Text>
-          <Text style={styles.subtitle}>
-            {summary ? formatMonthLabel(summary.month) : "This month"}
-          </Text>
-        </View>
+        <PageHeader
+          title="Monthly Summary"
+          subtitle={summary ? formatMonthLabel(summary.month) : "This month"}
+        />
 
         {isLoading ? (
           <View style={styles.stateCard}>
@@ -73,7 +80,9 @@ export function SummaryScreen() {
 
         {!isLoading && !error && summary ? (
           <>
-            <View style={styles.statsRow}>
+            <View
+              style={[styles.statsRow, isCompact && styles.statsRowStacked]}
+            >
               <StatPill
                 label="Inflow"
                 value={formatCurrencyValue(summary.total_inflow)}
@@ -145,22 +154,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
     gap: spacing.xl,
   },
-  header: {
-    gap: spacing.sm,
-  },
-  title: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: typography.size.display,
-    color: colors.ink,
-  },
-  subtitle: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.size.md,
-    color: colors.slate,
-  },
   statsRow: {
     flexDirection: "row",
     gap: spacing.sm,
+  },
+  statsRowStacked: {
+    flexDirection: "column",
   },
   section: {
     backgroundColor: colors.surface,
@@ -186,16 +185,21 @@ const styles = StyleSheet.create({
   categoryHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: spacing.xs,
   },
   categoryLabel: {
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.md,
     color: colors.ink,
+    flex: 1,
+    minWidth: 0,
   },
   categoryValue: {
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.size.md,
     color: colors.cobalt,
+    textAlign: "right",
   },
   categoryValueInflow: {
     color: colors.success,

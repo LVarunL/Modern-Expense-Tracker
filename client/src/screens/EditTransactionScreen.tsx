@@ -11,6 +11,7 @@ import {
   type EditableTransaction,
 } from "../components/EditableTransactionCard";
 import { GhostButton } from "../components/GhostButton";
+import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import {
@@ -117,11 +118,11 @@ export function EditTransactionScreen() {
             transform: [{ translateY: animation.translateY }],
           }}
         >
-          <Text style={styles.title}>Edit transaction</Text>
-          <Text style={styles.subtitle}>{transaction.category}</Text>
-          <Text style={styles.meta}>
-            {formatDateTime(transaction.occurred_time)}
-          </Text>
+          <PageHeader
+            title="Edit transaction"
+            subtitle={transaction.category}
+            meta={formatDateTime(transaction.occurred_time)}
+          />
         </Animated.View>
 
         <EditableTransactionCard
@@ -162,24 +163,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xxxl,
     gap: spacing.xl,
-  },
-  title: {
-    fontFamily: typography.fontFamily.bold,
-    fontSize: typography.size.xxl,
-    color: colors.ink,
-  },
-  subtitle: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.size.md,
-    color: colors.slate,
-    marginTop: spacing.sm,
-    lineHeight: typography.lineHeight.relaxed,
-  },
-  meta: {
-    fontFamily: typography.fontFamily.medium,
-    fontSize: typography.size.sm,
-    color: colors.steel,
-    marginTop: spacing.xs,
   },
   actions: {
     gap: spacing.sm,
