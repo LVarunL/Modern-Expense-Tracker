@@ -13,13 +13,20 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Allow microphone access to capture expense details by voice.",
+        "NSSpeechRecognitionUsageDescription": "Allow speech recognition to convert voice input into expenses."
+      },
+      "bundleIdentifier": "com.anonymous.client"
     },
     "android": {
+      "permissions": ["RECORD_AUDIO", "RECORD_AUDIO"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.client"
     },
     "web": {
       "favicon": "./assets/favicon.png"

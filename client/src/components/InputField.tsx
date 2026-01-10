@@ -16,9 +16,12 @@ export function InputField({
   onChangeText,
   placeholder,
   multiline,
+  children,
 }: PropsWithChildren<InputFieldProps>) {
+  const hasActions = Boolean(children);
+
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, hasActions && styles.wrapperWithActions]}>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -28,6 +31,7 @@ export function InputField({
         multiline={multiline}
         textAlignVertical={multiline ? "top" : "center"}
       />
+      {children ? <View style={styles.actions}>{children}</View> : null}
     </View>
   );
 }
@@ -46,13 +50,23 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
+  wrapperWithActions: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
   input: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.size.md,
     color: colors.ink,
     minHeight: 24,
+    flex: 1,
   },
   multiline: {
     minHeight: 120,
+  },
+  actions: {
+    alignItems: "center",
+    justifyContent: "flex-start",
   },
 });
