@@ -9,6 +9,7 @@ interface PrimaryButtonProps {
   label: string;
   suffix?: string;
   disabled?: boolean;
+  tone?: "primary" | "danger";
 }
 
 export function PrimaryButton({
@@ -16,13 +17,16 @@ export function PrimaryButton({
   label,
   suffix,
   disabled = false,
+  tone = "primary",
 }: PropsWithChildren<PrimaryButtonProps>) {
+  const toneStyle = tone === "danger" ? styles.buttonDanger : null;
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
+        toneStyle,
         pressed && !disabled && styles.pressed,
         disabled && styles.disabled,
       ]}
@@ -51,6 +55,9 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
+  },
+  buttonDanger: {
+    backgroundColor: colors.danger,
   },
   pressed: {
     transform: [{ scale: 0.98 }],

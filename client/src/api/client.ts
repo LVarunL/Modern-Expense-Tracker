@@ -1,3 +1,4 @@
+import { getValidAccessToken, refreshSession } from "../state/authStorage";
 import { API_BASE_URL } from "./config";
 
 export class ApiError extends Error {
@@ -15,6 +16,8 @@ interface RequestOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
+  auth?: boolean;
+  retry?: boolean;
 }
 
 export async function request<T>(
@@ -24,6 +27,13 @@ export async function request<T>(
   const headers: Record<string, string> = {
     ...options.headers,
   };
+  const shouldAuth = options.auth !== false;
+  if (shouldAuth) {
+    const token = await getValidAccessToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
   if (options.body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
@@ -42,6 +52,15 @@ export async function request<T>(
     } catch {
       data = text;
     }
+  }
+
+  if (
+    response.status === 401 &&
+    shouldAuth &&
+    options.retry !== false &&
+    (await refreshSession())
+  ) {
+    return request<T>(path, { ...options, retry: false });
   }
 
   if (!response.ok) {

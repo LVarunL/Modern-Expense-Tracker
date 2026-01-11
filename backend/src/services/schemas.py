@@ -6,13 +6,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
+import uuid
 
 from src.models.enums import EntrySource, EntryStatus, TransactionDirection, TransactionType
 
 
 @dataclass(frozen=True, slots=True)
 class EntryCreate:
-    user_id: str
+    user_id: uuid.UUID
     raw_text: str
     source: EntrySource = EntrySource.manual_text
     parser_output_json: dict[str, Any] | None = None

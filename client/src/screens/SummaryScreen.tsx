@@ -9,8 +9,8 @@ import {
 } from "react-native";
 
 import { fetchSummary, getErrorMessage } from "../api";
+import { AppHeader } from "../components/AppHeader";
 import { GhostButton } from "../components/GhostButton";
-import { PageHeader } from "../components/PageHeader";
 import { Screen } from "../components/Screen";
 import { StatPill } from "../components/StatPill";
 import { colors } from "../theme/colors";
@@ -56,9 +56,10 @@ export function SummaryScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <PageHeader
+        <AppHeader
           title="Monthly Summary"
           subtitle={summary ? formatMonthLabel(summary.month) : "This month"}
+          showAccount
         />
 
         {isLoading ? (

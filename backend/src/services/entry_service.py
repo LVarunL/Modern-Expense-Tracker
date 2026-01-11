@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -76,7 +77,7 @@ async def touch_entry(
 async def list_entries(
     session: AsyncSession,
     *,
-    user_id: str | None = None,
+    user_id: uuid.UUID | None = None,
     pagination: PaginationParams = PaginationParams(limit=100),
 ) -> list[Entry]:
     query = (

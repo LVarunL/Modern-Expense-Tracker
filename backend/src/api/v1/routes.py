@@ -10,10 +10,12 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import get_settings
 from src.database import get_session
+from src.models.entry import Entry
 from src.models.enums import EntryStatus, TransactionDirection
 from src.models.transaction import Transaction
+from src.models.user import User
+from src.auth.dependencies import get_current_user
 from src.services import (
     EntryCreate,
     FilterClause,
@@ -30,6 +32,7 @@ from src.services import (
     update_entry_status,
     update_transaction,
 )
+from src.api.v1.auth import router as auth_router
 from src.api.v1.examples import (
     CONFIRM_REQUEST_EXAMPLES,
     CONFIRM_RESPONSE_EXAMPLES,
@@ -66,6 +69,7 @@ from src.api.v1.schemas import (
 )
 
 router = APIRouter()
+router.include_router(auth_router)
 
 transaction_sort_dependency = build_sort_dependency(
     sort_enum=TransactionField,
@@ -98,8 +102,8 @@ async def parse_text(
     payload: ParseRequest = Body(..., examples=PARSE_REQUEST_EXAMPLES),
     session: AsyncSession = Depends(get_session),
     parser: LLMParser = Depends(get_parser),
+    current_user: User = Depends(get_current_user),
 ) -> ParseResponse:
-    settings = get_settings()
     tzinfo = ZoneInfo("Asia/Kolkata")
     reference_datetime = payload.reference_datetime
     if reference_datetime is None:
@@ -127,7 +131,7 @@ async def parse_text(
     entry = await create_entry(
         session,
         entry=EntryCreate(
-            user_id=settings.default_user_id,
+            user_id=current_user.id,
             raw_text=payload.raw_text,
             status=entry_status,
             parser_output_json={
@@ -174,30 +178,30 @@ async def parse_text(
 async def confirm_entry(
     payload: ConfirmRequest = Body(..., examples=CONFIRM_REQUEST_EXAMPLES),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> ConfirmResponse:
-    settings = get_settings()
-    async with session.begin():
-        entry = await get_entry(session, payload.entry_id)
-        if not entry or entry.user_id != settings.default_user_id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Entry not found",
-            )
+    entry = await get_entry(session, payload.entry_id)
+    if not entry or entry.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Entry not found",
+        )
 
-        transaction_inputs = [
-            TransactionCreate(
-                entry_id=entry.id,
-                occurred_at=item.occurred_time,
-                amount=item.amount,
-                currency=item.currency,
-                direction=item.direction,
-                type=item.type,
-                category=item.category,
-                assumptions_json=item.assumptions,
-            )
-            for item in payload.transactions
-        ]
+    transaction_inputs = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=item.occurred_time,
+            amount=item.amount,
+            currency=item.currency,
+            direction=item.direction,
+            type=item.type,
+            category=item.category,
+            assumptions_json=item.assumptions,
+        )
+        for item in payload.transactions
+    ]
 
+    try:
         await soft_delete_transactions_for_entry(
             session,
             entry_id=entry.id,
@@ -214,10 +218,14 @@ async def confirm_entry(
             status=EntryStatus.confirmed,
             commit=False,
         )
-        await session.flush()
-        await session.refresh(entry)
-        for transaction in transactions:
-            await session.refresh(transaction)
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+
+    await session.refresh(entry)
+    for transaction in transactions:
+        await session.refresh(transaction)
 
     return ConfirmResponse(entry=entry, transactions=transactions)
 
@@ -240,26 +248,26 @@ async def update_transaction_route(
         ..., examples=TRANSACTION_UPDATE_REQUEST_EXAMPLES
     ),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> TransactionOut:
-    settings = get_settings()
-    async with session.begin():
-        transaction = await get_transaction(session, transaction_id=transaction_id)
-        if not transaction:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Transaction not found",
-            )
-        entry = await get_entry(session, transaction.entry_id)
-        if not entry or entry.user_id != settings.default_user_id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Transaction not found",
-            )
-        if entry.status != EntryStatus.confirmed:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Transaction can only be edited after confirmation",
-            )
+    transaction = await get_transaction(session, transaction_id=transaction_id)
+    if not transaction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Transaction not found",
+        )
+    entry = await get_entry(session, transaction.entry_id)
+    if not entry or entry.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Transaction not found",
+        )
+    if entry.status != EntryStatus.confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Transaction can only be edited after confirmation",
+        )
+    try:
         updated = await update_transaction(
             session,
             transaction=transaction,
@@ -273,9 +281,13 @@ async def update_transaction_route(
             commit=False,
         )
         await touch_entry(session, entry=entry, commit=False)
-        await session.flush()
-        await session.refresh(updated)
-        response = TransactionOut.model_validate(updated)
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+
+    await session.refresh(updated)
+    response = TransactionOut.model_validate(updated)
 
     return response
 
@@ -297,12 +309,14 @@ async def list_transactions(
     sort: SortParams[TransactionField] = Depends(transaction_sort_dependency),
     filters: list[FilterClause[TransactionField]] = Depends(get_transaction_filters),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> TransactionsResponse:
     start, end = date_range(from_date, to_date)
     items, total_count = await list_transactions_paginated(
         session,
         from_date=start,
         to_date=end,
+        user_id=current_user.id,
         pagination=pagination,
         sort=sort,
         filters=filters,
@@ -327,6 +341,7 @@ async def list_transactions(
 async def get_summary(
     month: str = Query(..., description="YYYY-MM"),
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> SummaryResponse:
     try:
         start, end = month_range(month)
@@ -338,12 +353,14 @@ async def get_summary(
 
     base_filters = [
         Transaction.is_deleted.is_(False),
+        Entry.user_id == current_user.id,
         Transaction.occurred_at >= start,
         Transaction.occurred_at < end,
     ]
 
     totals_query = (
         select(Transaction.direction, func.coalesce(func.sum(Transaction.amount), 0))
+        .join(Entry)
         .where(*base_filters)
         .group_by(Transaction.direction)
     )
@@ -358,6 +375,7 @@ async def get_summary(
             Transaction.category,
             func.coalesce(func.sum(Transaction.amount), 0),
         )
+        .join(Entry)
         .where(*base_filters)
         .group_by(Transaction.direction, Transaction.category)
         .order_by(Transaction.direction, Transaction.category)
@@ -368,7 +386,7 @@ async def get_summary(
         for direction, category, total in category_result.all()
     ]
 
-    count_query = select(func.count(Transaction.id)).where(*base_filters)
+    count_query = select(func.count(Transaction.id)).join(Entry).where(*base_filters)
     count_result = await session.scalar(count_query)
 
     return SummaryResponse(

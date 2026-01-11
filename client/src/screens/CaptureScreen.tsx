@@ -15,8 +15,8 @@ import {
 
 import { getErrorMessage, parseEntry } from "../api";
 import type { ParseResponse } from "../api/types";
+import { AppHeader } from "../components/AppHeader";
 import { InputField } from "../components/InputField";
-import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import type { RootStackParamList } from "../navigation/types";
@@ -168,9 +168,10 @@ export function CaptureScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <PageHeader
+        <AppHeader
           title="Capture"
           subtitle="Describe your spend in one line. We will parse and preview it."
+          showAccount
         />
 
         <InputField

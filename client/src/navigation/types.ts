@@ -1,6 +1,8 @@
 import type { ParseResponse, TransactionOut } from "../api/types";
 
 export type RootStackParamList = {
+  Auth: undefined;
+  AccountSettings: undefined;
   MainTabs: undefined;
   PreviewModal: {
     preview: ParseResponse;

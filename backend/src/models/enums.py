@@ -28,3 +28,7 @@ class TransactionType(str, Enum):
     transfer = "transfer"
     investment_income = "investment_income"
     other = "other"
+
+
+class OAuthProvider(str, Enum):
+    google = "google"

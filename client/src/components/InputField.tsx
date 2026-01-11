@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from "react";
+import type { TextInputProps } from "react-native";
 import { StyleSheet, TextInput, View } from "react-native";
 
 import { colors } from "../theme/colors";
@@ -9,6 +10,13 @@ interface InputFieldProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  secureTextEntry?: boolean;
+  keyboardType?: TextInputProps["keyboardType"];
+  autoCapitalize?: TextInputProps["autoCapitalize"];
+  autoCorrect?: TextInputProps["autoCorrect"];
+  textContentType?: TextInputProps["textContentType"];
+  returnKeyType?: TextInputProps["returnKeyType"];
+  onSubmitEditing?: () => void;
 }
 
 export function InputField({
@@ -16,6 +24,13 @@ export function InputField({
   onChangeText,
   placeholder,
   multiline,
+  secureTextEntry,
+  keyboardType,
+  autoCapitalize,
+  autoCorrect,
+  textContentType,
+  returnKeyType,
+  onSubmitEditing,
   children,
 }: PropsWithChildren<InputFieldProps>) {
   const hasActions = Boolean(children);
@@ -30,6 +45,13 @@ export function InputField({
         style={[styles.input, multiline && styles.multiline]}
         multiline={multiline}
         textAlignVertical={multiline ? "top" : "center"}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        textContentType={textContentType}
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
       />
       {children ? <View style={styles.actions}>{children}</View> : null}
     </View>
@@ -60,7 +82,7 @@ const styles = StyleSheet.create({
     fontSize: typography.size.md,
     color: colors.ink,
     minHeight: 24,
-    flex: 1,
+    // flex: 1,
   },
   multiline: {
     minHeight: 120,

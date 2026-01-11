@@ -32,6 +32,21 @@ LLM_MODEL=gemini-1.5-flash
 LLM_API_KEY=your-api-key
 ```
 
+## Auth configuration
+
+Set these in `backend/.env` if you are enabling auth:
+
+- `JWT_SECRET` (required in production)
+- `JWT_ISSUER` (default: `expense-tracker`)
+- `JWT_AUDIENCE` (default: `expense-tracker`)
+- `ACCESS_TOKEN_MINUTES` (default: `30`)
+- `REFRESH_TOKEN_DAYS` (default: `30`)
+- `AUTH_REQUIRED` (`true` to require auth)
+
+Google login:
+
+- `GOOGLE_CLIENT_IDS` (comma-separated list of allowed client IDs)
+
 ## Parser expectations
 
 To improve parse quality, keep prompts explicit and consistent:

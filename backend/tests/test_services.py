@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
+import uuid
 
 from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.services import (
@@ -25,13 +26,15 @@ from src.services import (
     update_entry_status,
 )
 
+TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+
 
 async def test_create_and_list_entries(db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Coffee"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Coffee"),
     )
-    entries = await list_entries(db_session, user_id="test-user")
+    entries = await list_entries(db_session, user_id=TEST_USER_ID)
     assert len(entries) == 1
     assert entries[0].id == entry.id
 
@@ -39,7 +42,7 @@ async def test_create_and_list_entries(db_session) -> None:
 async def test_update_entry_status(db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Groceries"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Groceries"),
     )
     updated = await update_entry_status(db_session, entry=entry, status=EntryStatus.confirmed)
     assert updated.status == EntryStatus.confirmed
@@ -48,7 +51,7 @@ async def test_update_entry_status(db_session) -> None:
 async def test_create_list_and_soft_delete_transactions(db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Salary"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Salary"),
     )
     transactions = [
         TransactionCreate(
@@ -83,7 +86,7 @@ async def test_create_list_and_soft_delete_transactions(db_session) -> None:
 async def test_list_transactions_paginated_returns_count(db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Paged"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Paged"),
     )
     transactions = [
         TransactionCreate(
@@ -129,7 +132,7 @@ async def test_list_transactions_paginated_returns_count(db_session) -> None:
 async def test_list_transactions_paginated_sorts_by_amount(db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Sort"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Sort"),
     )
     transactions = [
         TransactionCreate(
@@ -166,7 +169,7 @@ async def test_list_transactions_paginated_sorts_by_amount(db_session) -> None:
 async def test_list_transactions_paginated_filters_by_category(db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Filter"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Filter"),
     )
     transactions = [
         TransactionCreate(
@@ -208,7 +211,7 @@ async def test_list_transactions_paginated_filters_by_category(db_session) -> No
 async def test_update_transaction_fields(db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Edit"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Edit"),
     )
     transactions = await create_transactions(
         db_session,

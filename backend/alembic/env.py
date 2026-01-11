@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "s
 
 from src.config import get_settings  # noqa: E402
 from src.models.base import Base  # noqa: E402
-from src.models import entry, transaction  # noqa: F401, E402
+from src.models import auth_session, entry, oauth_identity, transaction, user  # noqa: F401, E402
 
 config = context.config
 

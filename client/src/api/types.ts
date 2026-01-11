@@ -118,3 +118,43 @@ export interface SummaryResponse {
   by_category: CategorySummary[];
   transaction_count: number;
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  has_password: boolean;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: "bearer";
+  expires_in: number;
+  user: AuthUser;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface GoogleLoginRequest {
+  id_token: string;
+}
+
+export interface RefreshRequest {
+  refresh_token: string;
+}
+
+export interface LogoutRequest {
+  refresh_token: string;
+}
+
+export interface DeleteAccountRequest {
+  password?: string;
+}

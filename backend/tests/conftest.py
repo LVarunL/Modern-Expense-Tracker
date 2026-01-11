@@ -1,26 +1,28 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
+from decimal import Decimal
+import uuid
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-
-from decimal import Decimal
 
 from src.config import get_settings
 from src.models.base import Base
 from src.models.enums import TransactionDirection, TransactionType
+from src.models.user import User
 from src.parser.service import ParsedResult, get_parser
-
 
 
 @pytest.fixture()
 async def test_engine(monkeypatch: pytest.MonkeyPatch) -> AsyncGenerator[AsyncEngine, None]:
     monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
-    monkeypatch.setenv("DEFAULT_USER_ID", "test-user")
+    monkeypatch.setenv("DEFAULT_USER_ID", TEST_USER_ID)
     monkeypatch.setenv("ENVIRONMENT", "test")
+    monkeypatch.setenv("AUTH_REQUIRED", "false")
     get_settings.cache_clear()
 
     engine = create_async_engine(
@@ -48,6 +50,16 @@ async def db_session(
     session_maker: async_sessionmaker[AsyncSession],
 ) -> AsyncGenerator[AsyncSession, None]:
     async with session_maker() as session:
+        result = await session.execute(select(User).where(User.id == uuid.UUID(TEST_USER_ID)))
+        if not result.scalar_one_or_none():
+            session.add(
+                User(
+                    id=uuid.UUID(TEST_USER_ID),
+                    email="test-user@expense.local",
+                    password_hash=None,
+                )
+            )
+            await session.commit()
         yield session
 
 
@@ -101,3 +113,4 @@ async def client(app):
         base_url="http://test",
     ) as client:
         yield client
+TEST_USER_ID = "00000000-0000-0000-0000-000000000001"

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+import uuid
 
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
@@ -11,6 +12,8 @@ from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.models.transaction import Transaction
 from src.parser.service import ParsedResult, ParserError, get_parser
 from src.services import EntryCreate, TransactionCreate, create_entry, create_transactions
+
+TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 
 async def test_health_check(client) -> None:
@@ -29,7 +32,7 @@ async def test_parse_creates_entry(client, db_session) -> None:
 
     result = await db_session.execute(select(Entry))
     entry = result.scalar_one()
-    assert entry.user_id == "test-user"
+    assert entry.user_id == TEST_USER_ID
     assert entry.raw_text == payload["raw_text"]
     assert entry.status == EntryStatus.pending_confirmation
     assert entry.parser_output_json is not None
@@ -213,7 +216,7 @@ async def test_update_transaction_updates_fields(client, db_session) -> None:
     entry = await create_entry(
         db_session,
         entry=EntryCreate(
-            user_id="test-user",
+            user_id=TEST_USER_ID,
             raw_text="Seed",
             status=EntryStatus.confirmed,
         ),
@@ -271,7 +274,7 @@ async def test_update_transaction_requires_confirmed_entry(client, db_session) -
     entry = await create_entry(
         db_session,
         entry=EntryCreate(
-            user_id="test-user",
+            user_id=TEST_USER_ID,
             raw_text="Pending",
             status=EntryStatus.pending_confirmation,
         ),
@@ -304,7 +307,7 @@ async def test_update_transaction_requires_confirmed_entry(client, db_session) -
 async def test_list_transactions_filters_and_paginates(client, db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Seed"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Seed"),
     )
 
     base_time = datetime(2025, 1, 10, tzinfo=timezone.utc)
@@ -352,7 +355,7 @@ async def test_list_transactions_filters_and_paginates(client, db_session) -> No
 async def test_list_transactions_supports_sorting(client, db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Sort seed"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Sort seed"),
     )
     items = [
         TransactionCreate(
@@ -399,7 +402,7 @@ async def test_list_transactions_supports_sorting(client, db_session) -> None:
 async def test_list_transactions_filters_by_direction_and_type(client, db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Filter seed"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Filter seed"),
     )
     items = [
         TransactionCreate(
@@ -437,7 +440,7 @@ async def test_list_transactions_filters_by_direction_and_type(client, db_sessio
 async def test_list_transactions_filters_by_category_and_amount(client, db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Filter seed"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Filter seed"),
     )
     items = [
         TransactionCreate(
@@ -496,7 +499,7 @@ async def test_list_transactions_rejects_invalid_sort(client) -> None:
 async def test_summary_returns_totals_and_categories(client, db_session) -> None:
     entry = await create_entry(
         db_session,
-        entry=EntryCreate(user_id="test-user", raw_text="Seed"),
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Seed"),
     )
 
     transactions = [

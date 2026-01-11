@@ -3,6 +3,7 @@
     "name": "client",
     "slug": "client",
     "version": "1.0.0",
+    "scheme": "expense-tracker",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,15 +19,16 @@
         "NSMicrophoneUsageDescription": "Allow microphone access to capture expense details by voice.",
         "NSSpeechRecognitionUsageDescription": "Allow speech recognition to convert voice input into expenses."
       },
-      "bundleIdentifier": "com.anonymous.client"
+      "bundleIdentifier": "com.expensetrackerlemon.app"
     },
     "android": {
+      "usesCleartextTraffic": true,
       "permissions": ["RECORD_AUDIO", "RECORD_AUDIO"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.client"
+      "package": "com.expensetrackerlemon.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -16,8 +16,8 @@ import {
 
 import { fetchTransactions, getErrorMessage } from "../api";
 import type { TransactionOut } from "../api/types";
+import { AppHeader } from "../components/AppHeader";
 import { GhostButton } from "../components/GhostButton";
-import { PageHeader } from "../components/PageHeader";
 import { Screen } from "../components/Screen";
 import { SelectSheet } from "../components/SelectSheet";
 import {
@@ -157,63 +157,58 @@ export function FeedScreen() {
         onRefresh={() => query.refetch()}
         ListHeaderComponent={
           <View style={styles.headerWrapper}>
+            <AppHeader
+              title="Feed"
+              subtitle="Latest transactions across categories."
+              showAccount
+            />
             <View
-              style={[styles.headerRow, isCompact && styles.headerRowStacked]}
+              style={[
+                styles.headerActions,
+                isCompact && styles.headerActionsStacked,
+              ]}
             >
-              <View style={styles.header}>
-                <PageHeader
-                  title="Feed"
-                  subtitle="Latest transactions across categories."
-                />
+              <View style={styles.actionRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.iconButton,
+                    pressed && styles.iconButtonPressed,
+                  ]}
+                  onPress={() => setIsSortOpen(true)}
+                >
+                  <Ionicons
+                    name="swap-vertical-outline"
+                    size={18}
+                    color={colors.cobalt}
+                  />
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.iconButton,
+                    pressed && styles.iconButtonPressed,
+                  ]}
+                  onPress={() => navigation.navigate("FilterModal")}
+                >
+                  <Ionicons
+                    name="options-outline"
+                    size={18}
+                    color={colors.cobalt}
+                  />
+                </Pressable>
               </View>
-              <View
-                style={[
-                  styles.headerActions,
-                  isCompact && styles.headerActionsStacked,
-                ]}
-              >
-                <View style={styles.actionRow}>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.iconButton,
-                      pressed && styles.iconButtonPressed,
-                    ]}
-                    onPress={() => setIsSortOpen(true)}
-                  >
-                    <Ionicons
-                      name="swap-vertical-outline"
-                      size={18}
-                      color={colors.cobalt}
-                    />
-                  </Pressable>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.iconButton,
-                      pressed && styles.iconButtonPressed,
-                    ]}
-                    onPress={() => navigation.navigate("FilterModal")}
-                  >
-                    <Ionicons
-                      name="options-outline"
-                      size={18}
-                      color={colors.cobalt}
-                    />
-                  </Pressable>
-                </View>
-                {activeFilterCount ? (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.clearFiltersButton,
-                      pressed && styles.clearFiltersPressed,
-                    ]}
-                    onPress={resetFilters}
-                  >
-                    <Text style={styles.clearFiltersText}>
-                      Clear filters ({activeFilterCount})
-                    </Text>
-                  </Pressable>
-                ) : null}
-              </View>
+              {activeFilterCount ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.clearFiltersButton,
+                    pressed && styles.clearFiltersPressed,
+                  ]}
+                  onPress={resetFilters}
+                >
+                  <Text style={styles.clearFiltersText}>
+                    Clear filters ({activeFilterCount})
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
             <SelectSheet
               visible={isSortOpen}
@@ -297,37 +292,24 @@ export function FeedScreen() {
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    gap: spacing.lg,
+    paddingTop: spacing.xxl,
+    gap: spacing.md,
     paddingBottom: spacing.lg,
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: spacing.md,
-    flexWrap: "wrap",
-  },
-  headerRowStacked: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-  },
-  header: {
-    paddingTop: spacing.xxl,
-    gap: spacing.sm,
-    flex: 1,
-    minWidth: 220,
-  },
   headerActions: {
-    alignItems: "flex-end",
-    gap: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: spacing.md,
   },
   headerActionsStacked: {
+    flexDirection: "column",
     alignItems: "flex-start",
   },
   actionRow: {
     flexDirection: "row",
     gap: spacing.sm,
-    paddingTop: spacing.xl,
   },
   iconButton: {
     width: 40,

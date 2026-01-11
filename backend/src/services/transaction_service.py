@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
+import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
+from src.models.entry import Entry
 from src.models.transaction import Transaction
-from enum import Enum
 
 from src.services.fields import FieldSpec, filterable_field_map, sortable_field_map
 from src.services.filtering import FilterClause, apply_filters
@@ -105,8 +107,11 @@ def _transaction_filters(
     *,
     from_date: datetime | None,
     to_date: datetime | None,
+    user_id: uuid.UUID | None,
 ) -> list:
     filters = [Transaction.is_deleted.is_(False)]
+    if user_id:
+        filters.append(Entry.user_id == user_id)
     if from_date:
         filters.append(Transaction.occurred_at >= from_date)
     if to_date:
@@ -140,6 +145,7 @@ async def list_transactions(
     *,
     from_date: datetime | None = None,
     to_date: datetime | None = None,
+    user_id: uuid.UUID | None = None,
     pagination: PaginationParams = PaginationParams(),
     sort: SortParams[TransactionField] | None = None,
     filters: list[FilterClause[TransactionField]] | None = None,
@@ -148,6 +154,7 @@ async def list_transactions(
         session,
         from_date=from_date,
         to_date=to_date,
+        user_id=user_id,
         pagination=pagination,
         sort=sort,
         filters=filters,
@@ -160,13 +167,19 @@ async def list_transactions_paginated(
     *,
     from_date: datetime | None = None,
     to_date: datetime | None = None,
+    user_id: uuid.UUID | None = None,
     pagination: PaginationParams = PaginationParams(),
     sort: SortParams[TransactionField] | None = None,
     filters: list[FilterClause[TransactionField]] | None = None,
 ) -> tuple[list[Transaction], int]:
-    base_filters = _transaction_filters(from_date=from_date, to_date=to_date)
-    items_query = select(Transaction).where(*base_filters)
-    count_query = select(func.count(Transaction.id)).where(*base_filters)
+    base_filters = _transaction_filters(from_date=from_date, to_date=to_date, user_id=user_id)
+    items_query = select(Transaction)
+    count_query = select(func.count(Transaction.id))
+    if user_id:
+        items_query = items_query.join(Entry)
+        count_query = count_query.join(Entry)
+    items_query = items_query.where(*base_filters)
+    count_query = count_query.where(*base_filters)
     transaction_filters = _normalize_transaction_filters(filters)
     if transaction_filters:
         items_query = apply_filters(

@@ -17,6 +17,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { queryClient } from "./src/queryClient";
+import { AuthProvider } from "./src/state/auth";
 import { FeedFiltersProvider } from "./src/state/feedFilters";
 
 export default function App() {
@@ -47,12 +48,14 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <FeedFiltersProvider>
-            <NavigationContainer>
-              <StatusBar style="dark" />
-              <RootNavigator />
-            </NavigationContainer>
-          </FeedFiltersProvider>
+          <AuthProvider>
+            <FeedFiltersProvider>
+              <NavigationContainer>
+                <StatusBar style="dark" />
+                <RootNavigator />
+              </NavigationContainer>
+            </FeedFiltersProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
