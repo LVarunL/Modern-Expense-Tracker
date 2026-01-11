@@ -19,6 +19,7 @@ import { AppHeader } from "../components/AppHeader";
 import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { featureFlags } from "../config/featureFlags";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -233,20 +234,22 @@ export function CaptureScreen() {
           ) : null}
         </View>
 
-        {/* <View style={styles.suggestionRow}>
-          {promptSuggestions.map((suggestion) => (
-            <Pressable
-              key={suggestion}
-              onPress={() => setText(suggestion)}
-              style={({ pressed }) => [
-                styles.suggestion,
-                pressed && styles.suggestionPressed,
-              ]}
-            >
-              <Text style={styles.suggestionText}>{suggestion}</Text>
-            </Pressable>
-          ))}
-        </View> */}
+        {featureFlags.capturePromptSuggestions ? (
+          <View style={styles.suggestionRow}>
+            {promptSuggestions.map((suggestion) => (
+              <Pressable
+                key={suggestion}
+                onPress={() => setText(suggestion)}
+                style={({ pressed }) => [
+                  styles.suggestion,
+                  pressed && styles.suggestionPressed,
+                ]}
+              >
+                <Text style={styles.suggestionText}>{suggestion}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
 
         <View style={styles.previewActions}>
           <PrimaryButton
@@ -262,7 +265,7 @@ export function CaptureScreen() {
           ) : null}
         </View>
 
-        {lastPreview ? (
+        {featureFlags.captureRecentPreview && lastPreview ? (
           <Animated.View
             style={[
               styles.previewCard,

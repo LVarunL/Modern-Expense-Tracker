@@ -23,6 +23,7 @@ import { InputField } from "../components/InputField";
 import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { featureFlags } from "../config/featureFlags";
 import { useAuth } from "../state/auth";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -199,7 +200,7 @@ export function AuthScreen() {
               />
             </Pressable>
           </InputField>
-          {mode === "login" ? (
+          {mode === "login" && featureFlags.authForgotPassword ? (
             <Pressable
               onPress={handleForgotPassword}
               style={({ pressed }) => [

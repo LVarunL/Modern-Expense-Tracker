@@ -15,6 +15,7 @@ import { GhostButton } from "../components/GhostButton";
 import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { featureFlags } from "../config/featureFlags";
 import { useAuth } from "../state/auth";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -82,24 +83,26 @@ export function AccountSettingsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Security</Text>
-          <Pressable
-            onPress={handleResetPassword}
-            style={({ pressed }) => [
-              styles.actionRow,
-              pressed && styles.actionRowPressed,
-            ]}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="key-outline" size={18} color={colors.cobalt} />
-            </View>
-            <View style={styles.actionBody}>
-              <Text style={styles.actionTitle}>Reset password</Text>
-              <Text style={styles.actionSubtitle}>
-                Send a reset link to your email.
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.steel} />
-          </Pressable>
+          {featureFlags.authResetPassword ? (
+            <Pressable
+              onPress={handleResetPassword}
+              style={({ pressed }) => [
+                styles.actionRow,
+                pressed && styles.actionRowPressed,
+              ]}
+            >
+              <View style={styles.actionIcon}>
+                <Ionicons name="key-outline" size={18} color={colors.cobalt} />
+              </View>
+              <View style={styles.actionBody}>
+                <Text style={styles.actionTitle}>Reset password</Text>
+                <Text style={styles.actionSubtitle}>
+                  Send a reset link to your email.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.steel} />
+            </Pressable>
+          ) : null}
 
           <Pressable
             onPress={handleDeleteAccount}
