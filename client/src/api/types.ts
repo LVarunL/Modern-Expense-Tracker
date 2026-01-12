@@ -158,3 +158,22 @@ export interface LogoutRequest {
 export interface DeleteAccountRequest {
   password?: string;
 }
+
+export interface MessageResponse {
+  message: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordConfirmRequest {
+  email: string;
+  otp: string;
+  new_password: string;
+}
+
+export interface ResetPasswordConfirmRequest {
+  otp: string;
+  new_password: string;
+}

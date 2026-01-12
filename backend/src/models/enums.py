@@ -32,3 +32,8 @@ class TransactionType(str, Enum):
 
 class OAuthProvider(str, Enum):
     google = "google"
+
+
+class OtpPurpose(str, Enum):
+    forgot_password = "forgot_password"
+    reset_password = "reset_password"

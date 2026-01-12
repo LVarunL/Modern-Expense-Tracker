@@ -1,14 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { getErrorMessage } from "../api";
 import { AppHeader } from "../components/AppHeader";
 import { GhostButton } from "../components/GhostButton";
@@ -16,6 +11,7 @@ import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { featureFlags } from "../config/featureFlags";
+import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../state/auth";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -23,6 +19,8 @@ import { typography } from "../theme/typography";
 
 export function AccountSettingsScreen() {
   const { user, logout, deleteAccount } = useAuth();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -30,10 +28,7 @@ export function AccountSettingsScreen() {
   const requiresPassword = Boolean(user?.has_password);
 
   const handleResetPassword = () => {
-    Alert.alert(
-      "Password reset",
-      "We will add email reset links soon. For now, sign in with Google or contact support."
-    );
+    navigation.navigate("ResetPassword");
   };
 
   const handleDeleteAccount = () => {
@@ -96,9 +91,13 @@ export function AccountSettingsScreen() {
                 <Ionicons name="key-outline" size={18} color={colors.cobalt} />
               </View>
               <View style={styles.actionBody}>
-                <Text style={styles.actionTitle}>Reset password</Text>
+                <Text style={styles.actionTitle}>
+                  {user?.has_password ? "Reset password" : "Set a password"}
+                </Text>
                 <Text style={styles.actionSubtitle}>
-                  Send a reset link to your email.
+                  {user?.has_password
+                    ? "Send a reset code to your email."
+                    : "Create a password for email sign-in."}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.steel} />

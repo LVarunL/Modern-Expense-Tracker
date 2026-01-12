@@ -21,6 +21,7 @@ import {
   clearAuthSnapshot,
   loadAuthSnapshot,
   refreshSession,
+  saveAuthSnapshot,
   setAuthFromResponse,
   type AuthSnapshot,
 } from "./authStorage";
@@ -34,6 +35,7 @@ interface AuthContextValue {
   loginWithGoogleToken: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password?: string) => Promise<void>;
+  updateUser: (updates: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -141,6 +143,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateUser = useCallback((updates: Partial<AuthUser>) => {
+    setSnapshot((prev) => {
+      if (!prev.user) {
+        return prev;
+      }
+      const next = {
+        ...prev,
+        user: {
+          ...prev.user,
+          ...updates,
+        },
+      };
+      void saveAuthSnapshot(next);
+      return next;
+    });
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       isLoading,
@@ -151,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithGoogleToken,
       logout,
       deleteAccount,
+      updateUser,
     }),
     [
       isLoading,
@@ -160,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithGoogleToken,
       logout,
       deleteAccount,
+      updateUser,
     ]
   );
 

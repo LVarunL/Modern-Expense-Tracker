@@ -6,8 +6,8 @@ export type FeatureFlags = {
 };
 
 export const featureFlags: FeatureFlags = {
-  authForgotPassword: false,
-  authResetPassword: false,
+  authForgotPassword: true,
+  authResetPassword: true,
   capturePromptSuggestions: false,
   captureRecentPreview: true,
 };

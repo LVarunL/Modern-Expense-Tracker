@@ -7,13 +7,14 @@ import re
 import uuid
 
 import httpx
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.security import generate_refresh_token, hash_refresh_token
 from src.config import Settings
+from src.models.auth_otp import AuthOTP
 from src.models.auth_session import AuthSession
-from src.models.enums import OAuthProvider
+from src.models.enums import OAuthProvider, OtpPurpose
 from src.models.oauth_identity import OAuthIdentity
 from src.models.user import User
 
@@ -143,6 +144,17 @@ async def revoke_refresh_session(
     await session.commit()
 
 
+async def revoke_refresh_sessions(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    commit: bool = True,
+) -> None:
+    await session.execute(delete(AuthSession).where(AuthSession.user_id == user_id))
+    if commit:
+        await session.commit()
+
+
 async def deactivate_user_account(
     session: AsyncSession,
     *,
@@ -154,6 +166,67 @@ async def deactivate_user_account(
     user.password_hash = None
     user.is_active = False
     await session.commit()
+
+
+async def create_auth_otp(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    email: str,
+    purpose: OtpPurpose,
+    otp_hash: str,
+    expires_at: datetime,
+) -> AuthOTP:
+    now = datetime.now(timezone.utc)
+    await session.execute(
+        update(AuthOTP)
+        .where(
+            AuthOTP.user_id == user_id,
+            AuthOTP.purpose == purpose,
+            AuthOTP.used_at.is_(None),
+        )
+        .values(used_at=now)
+    )
+    otp = AuthOTP(
+        user_id=user_id,
+        email=normalize_email(email),
+        purpose=purpose,
+        otp_hash=otp_hash,
+        expires_at=expires_at,
+    )
+    session.add(otp)
+    await session.commit()
+    await session.refresh(otp)
+    return otp
+
+
+async def consume_auth_otp(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    purpose: OtpPurpose,
+    otp_hash: str,
+    commit: bool = True,
+) -> AuthOTP | None:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(AuthOTP)
+        .where(
+            AuthOTP.user_id == user_id,
+            AuthOTP.purpose == purpose,
+            AuthOTP.otp_hash == otp_hash,
+            AuthOTP.used_at.is_(None),
+            AuthOTP.expires_at > now,
+        )
+        .order_by(AuthOTP.created_at.desc())
+    )
+    otp = result.scalars().first()
+    if not otp:
+        return None
+    otp.used_at = now
+    if commit:
+        await session.commit()
+    return otp
 
 
 async def verify_google_id_token(

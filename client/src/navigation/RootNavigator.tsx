@@ -4,7 +4,9 @@ import { AccountSettingsScreen } from "../screens/AccountSettingsScreen";
 import { AuthScreen } from "../screens/AuthScreen";
 import { EditTransactionScreen } from "../screens/EditTransactionScreen";
 import { FilterModalScreen } from "../screens/FilterModalScreen";
+import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
 import { PreviewScreen } from "../screens/PreviewScreen";
+import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { useAuth } from "../state/auth";
 import { TabNavigator } from "./TabNavigator";
 import type { RootStackParamList } from "./types";
@@ -42,9 +44,16 @@ export function RootNavigator() {
             name="AccountSettings"
             component={AccountSettingsScreen}
           />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         </>
       ) : (
-        <Stack.Screen name="Auth" component={AuthScreen} />
+        <>
+          <Stack.Screen name="Auth" component={AuthScreen} />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+          />
+        </>
       )}
     </Stack.Navigator>
   );

@@ -2,6 +2,8 @@ import type { ParseResponse, TransactionOut } from "../api/types";
 
 export type RootStackParamList = {
   Auth: undefined;
+  ForgotPassword: { email?: string } | undefined;
+  ResetPassword: undefined;
   AccountSettings: undefined;
   MainTabs: undefined;
   PreviewModal: {

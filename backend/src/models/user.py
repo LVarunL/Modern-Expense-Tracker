@@ -48,3 +48,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    otps: Mapped[list["AuthOTP"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )

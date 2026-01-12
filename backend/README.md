@@ -47,6 +47,26 @@ Google login:
 
 - `GOOGLE_CLIENT_IDS` (comma-separated list of allowed client IDs)
 
+OTP settings (password reset codes):
+
+- `OTP_SECRET` (defaults to `JWT_SECRET` if unset)
+- `OTP_EXPIRES_MINUTES` (default: `10`)
+- `OTP_LENGTH` (default: `6`)
+
+## Email configuration
+
+Email delivery is abstracted behind a provider. Defaults:
+
+- `EMAIL_PROVIDER` (`file` in development, `noop` in tests, `brevo` for Brevo)
+- `EMAIL_FROM` (default: `Expense Tracker <no-reply@expense.local>`)
+- `EMAIL_FILE_DIR` (directory for file-based emails, default: `.emails`)
+
+Brevo settings (when `EMAIL_PROVIDER=brevo`):
+
+- `BREVO_API_KEY`
+- `BREVO_BASE_URL` (default: `https://api.brevo.com/v3`)
+- `BREVO_TIMEOUT_SECONDS` (default: `10`)
+
 ## Parser expectations
 
 To improve parse quality, keep prompts explicit and consistent:

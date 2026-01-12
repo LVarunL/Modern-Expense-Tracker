@@ -1,3 +1,4 @@
+from src.models.auth_otp import AuthOTP
 from src.models.auth_session import AuthSession
 from src.models.base import Base
 from src.models.entry import Entry
@@ -7,6 +8,7 @@ from src.models.user import User
 
 __all__ = [
     "AuthSession",
+    "AuthOTP",
     "Base",
     "Entry",
     "OAuthIdentity",

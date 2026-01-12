@@ -4,7 +4,6 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +12,8 @@ import {
   View,
 } from "react-native";
 
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   GOOGLE_ANDROID_CLIENT_ID,
   GOOGLE_IOS_CLIENT_ID,
@@ -24,6 +25,7 @@ import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { featureFlags } from "../config/featureFlags";
+import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../state/auth";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -36,6 +38,8 @@ type AuthMode = "login" | "register";
 export function AuthScreen() {
   const { loginWithPassword, registerWithPassword, loginWithGoogleToken } =
     useAuth();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -116,17 +120,9 @@ export function AuthScreen() {
   };
 
   const handleForgotPassword = () => {
-    if (email.trim()) {
-      Alert.alert(
-        "Password reset",
-        `We'll add reset links soon. For now, try Google sign-in or contact support for ${email.trim()}.`
-      );
-      return;
-    }
-    Alert.alert(
-      "Password reset",
-      "We'll add reset links soon. Enter your email and try again, or use Google sign-in."
-    );
+    navigation.navigate("ForgotPassword", {
+      email: email.trim() ? email.trim() : undefined,
+    });
   };
 
   const handleGoogle = async () => {

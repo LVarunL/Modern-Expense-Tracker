@@ -64,3 +64,13 @@ def generate_refresh_token() -> str:
 
 def hash_refresh_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def generate_otp(length: int) -> str:
+    maximum = 10**length
+    return f"{secrets.randbelow(maximum):0{length}d}"
+
+
+def hash_otp(otp: str, *, settings: Settings) -> str:
+    payload = f"{settings.otp_secret}:{otp}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
