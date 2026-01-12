@@ -13,6 +13,8 @@ interface AppHeaderProps {
   title: string;
   subtitle?: string;
   meta?: string;
+  showBack?: boolean;
+  onBackPress?: () => void;
   showAccount?: boolean;
 }
 
@@ -20,16 +22,32 @@ export function AppHeader({
   title,
   subtitle,
   meta,
+  showBack = false,
+  onBackPress,
   showAccount = false,
 }: AppHeaderProps) {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useAuth();
   const initial = user?.email?.trim()?.[0]?.toUpperCase() ?? "";
+  const canGoBack = navigation.canGoBack();
+  const showBackButton = showBack && canGoBack;
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
+        {showBackButton ? (
+          <Pressable
+            onPress={onBackPress ?? navigation.goBack}
+            accessibilityLabel="Go back"
+            style={({ pressed }) => [
+              styles.backButton,
+              pressed && styles.backButtonPressed,
+            ]}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.ink} />
+          </Pressable>
+        ) : null}
         <View style={styles.textBlock}>
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -64,6 +82,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.md,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   textBlock: {
     flex: 1,

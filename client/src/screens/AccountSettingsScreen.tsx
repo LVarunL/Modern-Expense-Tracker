@@ -74,6 +74,7 @@ export function AccountSettingsScreen() {
         <AppHeader
           title="Account settings"
           subtitle="Manage your sign-in and security."
+          showBack
         />
 
         <View style={styles.card}>
