@@ -12,6 +12,7 @@ import { GhostButton } from "../components/GhostButton";
 import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { useToast } from "../components/ToastProvider";
 import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../state/auth";
 import { colors } from "../theme/colors";
@@ -23,6 +24,7 @@ type Step = "request" | "verify" | "done";
 
 export function ResetPasswordScreen({ navigation }: Props) {
   const { user, updateUser } = useAuth();
+  const toast = useToast();
   const [step, setStep] = useState<Step>("request");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
@@ -42,8 +44,11 @@ export function ResetPasswordScreen({ navigation }: Props) {
       await requestResetPassword();
       setStep("verify");
       setMessage("Code sent. Check your inbox.");
+      toast.info("Code sent", "Check your email for the OTP.");
     } catch (err) {
-      setError(getErrorMessage(err));
+      const message = getErrorMessage(err);
+      setError(message);
+      toast.error("Could not send code", message);
     } finally {
       setIsSubmitting(false);
     }
@@ -72,11 +77,14 @@ export function ResetPasswordScreen({ navigation }: Props) {
       updateUser({ has_password: true });
       setStep("done");
       setMessage("Password updated.");
+      toast.success("Password updated", "Your password is now active.");
       setOtp("");
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(getErrorMessage(err));
+      const message = getErrorMessage(err);
+      setError(message);
+      toast.error("Reset failed", message);
     } finally {
       setIsSubmitting(false);
     }

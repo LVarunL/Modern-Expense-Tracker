@@ -15,6 +15,7 @@ import { GhostButton } from "../components/GhostButton";
 import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { useToast } from "../components/ToastProvider";
 import {
   TRANSACTION_CATEGORIES,
   TRANSACTION_TYPES,
@@ -36,6 +37,7 @@ export function PreviewScreen() {
   const { preview, rawText } = route.params;
   const animation = useEntranceAnimation(20);
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const [draftTransactions, setDraftTransactions] = useState<
     EditableTransaction[]
@@ -127,9 +129,12 @@ export function PreviewScreen() {
       await confirmEntry(payload);
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       await queryClient.invalidateQueries({ queryKey: ["summary"] });
+      toast.success("Saved", "Transactions confirmed.");
       navigation.goBack();
     } catch (error) {
-      setConfirmError(getErrorMessage(error));
+      const message = getErrorMessage(error);
+      setConfirmError(message);
+      toast.error("Could not save", message);
     } finally {
       setIsConfirming(false);
     }

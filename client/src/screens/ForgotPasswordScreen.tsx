@@ -8,6 +8,7 @@ import { GhostButton } from "../components/GhostButton";
 import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { useToast } from "../components/ToastProvider";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -17,6 +18,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "ForgotPassword">;
 type Step = "request" | "verify" | "done";
 
 export function ForgotPasswordScreen({ route, navigation }: Props) {
+  const toast = useToast();
   const [email, setEmail] = useState(route.params?.email ?? "");
   const [step, setStep] = useState<Step>("request");
   const [otp, setOtp] = useState("");
@@ -42,8 +44,11 @@ export function ForgotPasswordScreen({ route, navigation }: Props) {
       await forgotPassword({ email: trimmedEmail });
       setStep("verify");
       setMessage("Code sent. Check your inbox.");
+      toast.info("Code sent", "Check your email for the OTP.");
     } catch (err) {
-      setError(getErrorMessage(err));
+      const message = getErrorMessage(err);
+      setError(message);
+      toast.error("Could not send code", message);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,11 +80,14 @@ export function ForgotPasswordScreen({ route, navigation }: Props) {
       });
       setStep("done");
       setMessage("Password updated. You can sign in now.");
+      toast.success("Password updated", "You can sign in now.");
       setOtp("");
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(getErrorMessage(err));
+      const message = getErrorMessage(err);
+      setError(message);
+      toast.error("Reset failed", message);
     } finally {
       setIsSubmitting(false);
     }

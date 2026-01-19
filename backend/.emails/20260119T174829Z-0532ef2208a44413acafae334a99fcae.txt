@@ -1,0 +1,11 @@
+From: varunvyas312@gmail.com
+To: locallocater3@gmail.com
+Subject: New sign-in to Expense Tracker
+
+Hi locallocater3@gmail.com,
+
+We detected a sign-in to your Expense Tracker account on 2026-01-19 17:48 UTC.
+IP: 10.37.155.32
+Device: okhttp/4.12.0
+
+If this wasn't you, reset your password or contact support.

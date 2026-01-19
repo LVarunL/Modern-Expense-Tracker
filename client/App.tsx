@@ -15,6 +15,7 @@ import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { ToastProvider } from "./src/components/ToastProvider";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { queryClient } from "./src/queryClient";
 import { AuthProvider } from "./src/state/auth";
@@ -50,10 +51,12 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <FeedFiltersProvider>
-              <NavigationContainer>
-                <StatusBar style="dark" />
-                <RootNavigator />
-              </NavigationContainer>
+              <ToastProvider>
+                <NavigationContainer>
+                  <StatusBar style="dark" />
+                  <RootNavigator />
+                </NavigationContainer>
+              </ToastProvider>
             </FeedFiltersProvider>
           </AuthProvider>
         </QueryClientProvider>

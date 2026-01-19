@@ -14,6 +14,7 @@ import { GhostButton } from "../components/GhostButton";
 import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { useToast } from "../components/ToastProvider";
 import {
   TRANSACTION_CATEGORIES,
   TRANSACTION_TYPES,
@@ -36,6 +37,7 @@ export function EditTransactionScreen() {
   const { transaction } = route.params;
   const animation = useEntranceAnimation(18);
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const [draft, setDraft] = useState<EditableTransaction>(() => ({
     id: `edit-${transaction.id}`,
@@ -98,9 +100,12 @@ export function EditTransactionScreen() {
       });
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       await queryClient.invalidateQueries({ queryKey: ["summary"] });
+      toast.success("Saved", "Transaction updated.");
       navigation.goBack();
     } catch (error) {
-      setSaveError(getErrorMessage(error));
+      const message = getErrorMessage(error);
+      setSaveError(message);
+      toast.error("Could not save", message);
     } finally {
       setIsSaving(false);
     }

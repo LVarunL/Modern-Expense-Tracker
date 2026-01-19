@@ -19,6 +19,7 @@ import { AppHeader } from "../components/AppHeader";
 import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { useToast } from "../components/ToastProvider";
 import { featureFlags } from "../config/featureFlags";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
@@ -37,6 +38,7 @@ export function CaptureScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [text, setText] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export function CaptureScreen() {
         await queryClient.invalidateQueries({ queryKey: ["summary"] });
         setLastPreview(preview);
         setText("");
+        toast.success("Logged", "Transactions saved.");
         return;
       }
       navigation.navigate("PreviewModal", {
@@ -77,7 +80,9 @@ export function CaptureScreen() {
         rawText: trimmed,
       });
     } catch (error) {
-      setParseError(getErrorMessage(error));
+      const message = getErrorMessage(error);
+      setParseError(message);
+      toast.error("Could not parse", message);
     } finally {
       setIsParsing(false);
     }
@@ -110,13 +115,15 @@ export function CaptureScreen() {
     Voice.onSpeechError = (event) => {
       setIsListening(false);
       setPartialTranscript("");
-      setVoiceError(event.error?.message ?? "Voice input failed.");
+      const message = event.error?.message ?? "Voice input failed.";
+      setVoiceError(message);
+      toast.error("Voice input failed", message);
     };
 
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
     };
-  }, []);
+  }, [toast]);
 
   const startListening = async () => {
     if (isListening) {

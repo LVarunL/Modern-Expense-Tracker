@@ -36,7 +36,13 @@ export function InputField({
   const hasActions = Boolean(children);
 
   return (
-    <View style={[styles.wrapper, hasActions && styles.wrapperWithActions]}>
+    <View
+      style={[
+        styles.wrapper,
+        hasActions && styles.wrapperWithActions,
+        hasActions && multiline && styles.wrapperWithActionsMultiline,
+      ]}
+    >
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -74,15 +80,19 @@ const styles = StyleSheet.create({
   },
   wrapperWithActions: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 12,
+  },
+  wrapperWithActionsMultiline: {
+    alignItems: "flex-start",
   },
   input: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.size.md,
     color: colors.ink,
     minHeight: 24,
-    // flex: 1,
+    flex: 1,
+    minWidth: 0,
   },
   multiline: {
     minHeight: 120,
