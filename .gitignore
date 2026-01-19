@@ -18,5 +18,8 @@ htmlcov/
 .env
 .env.*
 
+# Email outbox
+backend/.emails/
+
 # OS
 .DS_Store

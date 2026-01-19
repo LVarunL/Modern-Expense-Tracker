@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from "@react-navigation/native";
+
 import type { ParseResponse, TransactionOut } from "../api/types";
 
 export type RootStackParamList = {
@@ -5,7 +7,7 @@ export type RootStackParamList = {
   ForgotPassword: { email?: string } | undefined;
   ResetPassword: undefined;
   AccountSettings: undefined;
-  MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<TabParamList>;
   PreviewModal: {
     preview: ParseResponse;
     rawText: string;
@@ -17,7 +19,7 @@ export type RootStackParamList = {
 };
 
 export type TabParamList = {
-  Capture: undefined;
+  Capture: { autoVoice?: boolean } | undefined;
   Feed: undefined;
   Summary: undefined;
 };

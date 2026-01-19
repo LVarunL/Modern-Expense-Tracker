@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import Voice from "@react-native-voice/voice";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Pressable,
@@ -21,7 +23,7 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { useToast } from "../components/ToastProvider";
 import { featureFlags } from "../config/featureFlags";
-import type { RootStackParamList } from "../navigation/types";
+import type { RootStackParamList, TabParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
@@ -37,6 +39,8 @@ const promptSuggestions = [
 export function CaptureScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const tabNavigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
+  const route = useRoute<RouteProp<TabParamList, "Capture">>();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [text, setText] = useState("");
@@ -125,7 +129,7 @@ export function CaptureScreen() {
     };
   }, [toast]);
 
-  const startListening = async () => {
+  const startListening = useCallback(async () => {
     if (isListening) {
       return;
     }
@@ -138,9 +142,9 @@ export function CaptureScreen() {
       setVoiceError(getErrorMessage(error));
       setIsListening(false);
     }
-  };
+  }, [isListening, text]);
 
-  const stopListening = async () => {
+  const stopListening = useCallback(async () => {
     if (!isListening) {
       return;
     }
@@ -149,7 +153,7 @@ export function CaptureScreen() {
     } catch (error) {
       setVoiceError(getErrorMessage(error));
     }
-  };
+  }, [isListening]);
 
   const handleClear = () => {
     if (isListening) {
@@ -169,6 +173,16 @@ export function CaptureScreen() {
       void startListening();
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!route.params?.autoVoice) {
+        return;
+      }
+      tabNavigation.setParams({ autoVoice: undefined });
+      void startListening();
+    }, [route.params?.autoVoice, startListening, tabNavigation])
+  );
 
   return (
     <Screen>

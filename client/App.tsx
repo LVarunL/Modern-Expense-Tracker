@@ -11,15 +11,17 @@ import { focusManager, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { AppState } from "react-native";
+import { AppState, Linking } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ToastProvider } from "./src/components/ToastProvider";
 import { RootNavigator } from "./src/navigation/RootNavigator";
+import { navigationRef } from "./src/navigation/navigationRef";
 import { queryClient } from "./src/queryClient";
 import { AuthProvider } from "./src/state/auth";
 import { FeedFiltersProvider } from "./src/state/feedFilters";
+import { setPendingVoiceCapture } from "./src/state/voiceIntent";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -41,6 +43,22 @@ export default function App() {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    const handleUrl = (url: string | null) => {
+      if (!url) {
+        return;
+      }
+      if (url.startsWith("expense-tracker://voice")) {
+        setPendingVoiceCapture(true);
+      }
+    };
+    Linking.getInitialURL().then(handleUrl).catch(() => {});
+    const subscription = Linking.addEventListener("url", ({ url }) =>
+      handleUrl(url)
+    );
+    return () => subscription.remove();
+  }, []);
+
   if (!fontsLoaded) {
     return null;
   }
@@ -52,7 +70,7 @@ export default function App() {
           <AuthProvider>
             <FeedFiltersProvider>
               <ToastProvider>
-                <NavigationContainer>
+                <NavigationContainer ref={navigationRef}>
                   <StatusBar style="dark" />
                   <RootNavigator />
                 </NavigationContainer>
