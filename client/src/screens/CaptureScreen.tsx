@@ -26,7 +26,9 @@ import { InputField } from "../components/InputField";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { useToast } from "../components/ToastProvider";
+import { TutorialTooltip } from "../components/TutorialTooltip";
 import { featureFlags } from "../config/featureFlags";
+import { useTutorial } from "../hooks/useTutorial";
 import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
@@ -61,6 +63,7 @@ export function CaptureScreen() {
   const animation = useEntranceAnimation(18);
   const canClear = text.length > 0 || partialTranscript.length > 0;
   const micIcon = isListening ? "stop" : "mic";
+  const tutorial = useTutorial("capture", 3);
 
   const previewItems = useMemo(
     () => (lastPreview ? lastPreview.transactions.slice(0, 2) : []),
@@ -204,46 +207,68 @@ export function CaptureScreen() {
           showAccount
         />
 
-        <InputField
-          value={text}
-          onChangeText={setText}
-          placeholder="e.g., Dinner 600 and dessert 200, movie 350"
-          multiline
+        <TutorialTooltip
+          visible={tutorial.isVisible && tutorial.stepIndex === 0}
+          step={1}
+          total={3}
+          title="Type a quick note"
+          body="Add a short sentence and we'll parse it into transactions."
+          placement="bottom"
+          onNext={tutorial.next}
+          onSkip={tutorial.skip}
         >
-          <View style={styles.inputActions}>
-            <Pressable
-              onPress={handleClear}
-              accessibilityLabel="Clear input"
-              disabled={!canClear}
-              style={({ pressed }) => [
-                styles.clearIconButton,
-                pressed && canClear && styles.clearIconButtonPressed,
-                !canClear && styles.clearIconButtonDisabled,
-              ]}
-            >
-              <Ionicons name="close" size={18} color={colors.slate} />
-            </Pressable>
-          </View>
-        </InputField>
+          <InputField
+            value={text}
+            onChangeText={setText}
+            placeholder="e.g., Dinner 600 and dessert 200, movie 350"
+            multiline
+          >
+            <View style={styles.inputActions}>
+              <Pressable
+                onPress={handleClear}
+                accessibilityLabel="Clear input"
+                disabled={!canClear}
+                style={({ pressed }) => [
+                  styles.clearIconButton,
+                  pressed && canClear && styles.clearIconButtonPressed,
+                  !canClear && styles.clearIconButtonDisabled,
+                ]}
+              >
+                <Ionicons name="close" size={18} color={colors.slate} />
+              </Pressable>
+            </View>
+          </InputField>
+        </TutorialTooltip>
 
         <View style={styles.voiceMeta}>
-          <Pressable
-            onPress={handleVoiceToggle}
-            accessibilityLabel={
-              isListening ? "Stop voice input" : "Start voice input"
-            }
-            style={({ pressed }) => [
-              styles.micButton,
-              isListening && styles.micButtonActive,
-              pressed && styles.micButtonPressed,
-            ]}
+          <TutorialTooltip
+            visible={tutorial.isVisible && tutorial.stepIndex === 1}
+            step={2}
+            total={3}
+            title="Use voice input"
+            body="Tap the mic to capture expenses hands-free."
+            placement="bottom"
+            onNext={tutorial.next}
+            onSkip={tutorial.skip}
           >
-            <Ionicons
-              name={micIcon}
-              size={22}
-              color={isListening ? colors.surface : colors.cobalt}
-            />
-          </Pressable>
+            <Pressable
+              onPress={handleVoiceToggle}
+              accessibilityLabel={
+                isListening ? "Stop voice input" : "Start voice input"
+              }
+              style={({ pressed }) => [
+                styles.micButton,
+                isListening && styles.micButtonActive,
+                pressed && styles.micButtonPressed,
+              ]}
+            >
+              <Ionicons
+                name={micIcon}
+                size={22}
+                color={isListening ? colors.surface : colors.cobalt}
+              />
+            </Pressable>
+          </TutorialTooltip>
           <View style={styles.voiceStatus}>
             <View
               style={[
@@ -281,11 +306,25 @@ export function CaptureScreen() {
         ) : null}
 
         <View style={styles.previewActions}>
-          <PrimaryButton
-            label={isParsing ? "Preparing breakdown..." : "Review transactions"}
-            onPress={handlePreview}
-            disabled={!text.trim() || isParsing}
-          />
+          <TutorialTooltip
+            visible={tutorial.isVisible && tutorial.stepIndex === 2}
+            step={3}
+            total={3}
+            title="Review before saving"
+            body="We extract transactions and you can confirm or edit."
+            placement="top"
+            nextLabel="Got it"
+            onNext={tutorial.next}
+            onSkip={tutorial.skip}
+          >
+            <PrimaryButton
+              label={
+                isParsing ? "Preparing breakdown..." : "Review transactions"
+              }
+              onPress={handlePreview}
+              disabled={!text.trim() || isParsing}
+            />
+          </TutorialTooltip>
           <Text style={styles.previewHint}>
             Review the breakdown before saving.
           </Text>

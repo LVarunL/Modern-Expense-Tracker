@@ -13,6 +13,7 @@ import { ForgotPasswordScreen } from "../screens/ForgotPasswordScreen";
 import { PreviewScreen } from "../screens/PreviewScreen";
 import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { useAuth } from "../state/auth";
+import { TUTORIAL_TAB_ROUTES, useTutorialFlow } from "../state/tutorialFlow";
 import {
   consumePendingVoiceCapture,
   subscribePendingVoiceCapture,
@@ -27,6 +28,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function RootNavigator() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const needsOnboarding = isAuthenticated && !user?.onboarding_completed;
+  const { activeId: activeTutorialId, isEnabled: isTutorialFlowEnabled } =
+    useTutorialFlow();
 
   useEffect(() => {
     const handlePendingVoice = () => {
@@ -47,6 +50,40 @@ export function RootNavigator() {
     handlePendingVoice();
     return subscribePendingVoiceCapture(handlePendingVoice);
   }, [isAuthenticated, needsOnboarding]);
+
+  useEffect(() => {
+    if (!isTutorialFlowEnabled || !activeTutorialId) {
+      return;
+    }
+    if (!isAuthenticated || needsOnboarding) {
+      return;
+    }
+    let cancelled = false;
+    let frameId: number | null = null;
+    const navigateToTutorialTab = () => {
+      if (cancelled) {
+        return;
+      }
+      if (!navigationRef.isReady()) {
+        frameId = requestAnimationFrame(navigateToTutorialTab);
+        return;
+      }
+      const targetTab = TUTORIAL_TAB_ROUTES[activeTutorialId];
+      navigationRef.navigate("MainTabs", { screen: targetTab });
+    };
+    navigateToTutorialTab();
+    return () => {
+      cancelled = true;
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [
+    activeTutorialId,
+    isAuthenticated,
+    isTutorialFlowEnabled,
+    needsOnboarding,
+  ]);
 
   if (isLoading) {
     return null;

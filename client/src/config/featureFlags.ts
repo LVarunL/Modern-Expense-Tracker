@@ -3,6 +3,7 @@ export type FeatureFlags = {
   authResetPassword: boolean;
   capturePromptSuggestions: boolean;
   captureRecentPreview: boolean;
+  forceTutorialOnAppOpen: boolean;
 };
 
 export const featureFlags: FeatureFlags = {
@@ -10,4 +11,5 @@ export const featureFlags: FeatureFlags = {
   authResetPassword: true,
   capturePromptSuggestions: false,
   captureRecentPreview: true,
+  forceTutorialOnAppOpen: false,
 };

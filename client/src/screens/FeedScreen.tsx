@@ -20,11 +20,13 @@ import { AppHeader } from "../components/AppHeader";
 import { GhostButton } from "../components/GhostButton";
 import { Screen } from "../components/Screen";
 import { SelectSheet } from "../components/SelectSheet";
+import { TutorialTooltip } from "../components/TutorialTooltip";
 import {
   TRANSACTION_SORT_OPTIONS,
   TransactionSortId,
 } from "../constants/sorting";
 import { TRANSACTION_TYPE_LABELS } from "../constants/transactions";
+import { useTutorial } from "../hooks/useTutorial";
 import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
 import { useFeedFilters } from "../state/feedFilters";
@@ -47,6 +49,7 @@ export function FeedScreen() {
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
   const currency = useUserCurrency();
+  const tutorial = useTutorial("feed", 2);
   const listRef = useRef<FlatList<TransactionOut>>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -100,10 +103,10 @@ export function FeedScreen() {
         ref={listRef}
         data={items}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const title = item.category;
           const subtitle = TRANSACTION_TYPE_LABELS[item.type] ?? item.type;
-          return (
+          const card = (
             <Pressable
               style={({ pressed }) => [
                 styles.card,
@@ -141,6 +144,24 @@ export function FeedScreen() {
               </View>
             </Pressable>
           );
+          if (tutorial.isVisible && tutorial.stepIndex === 1 && index === 0) {
+            return (
+              <TutorialTooltip
+                visible
+                step={2}
+                total={2}
+                title="Tap to edit"
+                body="Open a transaction to edit details or fix mistakes."
+                placement="bottom"
+                nextLabel="Got it"
+                onNext={tutorial.next}
+                onSkip={tutorial.skip}
+              >
+                {card}
+              </TutorialTooltip>
+            );
+          }
+          return card;
         }}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
@@ -164,54 +185,65 @@ export function FeedScreen() {
               subtitle="Your transactions, updated in real time."
               showAccount
             />
-            <View
-              style={[
-                styles.headerActions,
-                isCompact && styles.headerActionsStacked,
-              ]}
+            <TutorialTooltip
+              visible={tutorial.isVisible && tutorial.stepIndex === 0}
+              step={1}
+              total={2}
+              title="Sort and filter"
+              body="Tap here to filter by type, category, or time."
+              placement="bottom"
+              onNext={tutorial.next}
+              onSkip={tutorial.skip}
             >
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.iconButton,
-                    pressed && styles.iconButtonPressed,
-                  ]}
-                  onPress={() => setIsSortOpen(true)}
-                >
-                  <Ionicons
-                    name="swap-vertical-outline"
-                    size={18}
-                    color={colors.cobalt}
-                  />
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.iconButton,
-                    pressed && styles.iconButtonPressed,
-                  ]}
-                  onPress={() => navigation.navigate("FilterModal")}
-                >
-                  <Ionicons
-                    name="options-outline"
-                    size={18}
-                    color={colors.cobalt}
-                  />
-                </Pressable>
+              <View
+                style={[
+                  styles.headerActions,
+                  isCompact && styles.headerActionsStacked,
+                ]}
+              >
+                <View style={styles.actionRow}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.iconButton,
+                      pressed && styles.iconButtonPressed,
+                    ]}
+                    onPress={() => setIsSortOpen(true)}
+                  >
+                    <Ionicons
+                      name="swap-vertical-outline"
+                      size={18}
+                      color={colors.cobalt}
+                    />
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.iconButton,
+                      pressed && styles.iconButtonPressed,
+                    ]}
+                    onPress={() => navigation.navigate("FilterModal")}
+                  >
+                    <Ionicons
+                      name="options-outline"
+                      size={18}
+                      color={colors.cobalt}
+                    />
+                  </Pressable>
+                </View>
+                {activeFilterCount ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.clearFiltersButton,
+                      pressed && styles.clearFiltersPressed,
+                    ]}
+                    onPress={resetFilters}
+                  >
+                    <Text style={styles.clearFiltersText}>
+                      Clear filters ({activeFilterCount})
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
-              {activeFilterCount ? (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.clearFiltersButton,
-                    pressed && styles.clearFiltersPressed,
-                  ]}
-                  onPress={resetFilters}
-                >
-                  <Text style={styles.clearFiltersText}>
-                    Clear filters ({activeFilterCount})
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
+            </TutorialTooltip>
             <SelectSheet
               visible={isSortOpen}
               title="Sort transactions"
@@ -242,12 +274,24 @@ export function FeedScreen() {
             ) : null}
 
             {showEmptyState ? (
-              <View style={styles.stateCard}>
-                <Text style={styles.stateTitle}>No transactions yet</Text>
-                <Text style={styles.stateSubtitle}>
-                  Add your first transaction to see it here.
-                </Text>
-              </View>
+              <TutorialTooltip
+                visible={tutorial.isVisible && tutorial.stepIndex === 1}
+                step={2}
+                total={2}
+                title="Your feed lives here"
+                body="Transactions you add will show up in this list."
+                placement="bottom"
+                nextLabel="Got it"
+                onNext={tutorial.next}
+                onSkip={tutorial.skip}
+              >
+                <View style={styles.stateCard}>
+                  <Text style={styles.stateTitle}>No transactions yet</Text>
+                  <Text style={styles.stateSubtitle}>
+                    Add your first transaction to see it here.
+                  </Text>
+                </View>
+              </TutorialTooltip>
             ) : null}
           </View>
         }
@@ -274,7 +318,9 @@ export function FeedScreen() {
         removeClippedSubviews
         maxToRenderPerBatch={FEED_PAGINATION_SIZE}
         windowSize={7}
-        initialNumToRender={0}
+        initialNumToRender={
+          tutorial.isVisible && tutorial.stepIndex === 1 ? 1 : 0
+        }
       />
 
       {showScrollTop ? (

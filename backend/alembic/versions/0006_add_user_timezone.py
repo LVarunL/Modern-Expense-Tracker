@@ -1,4 +1,4 @@
-"""Add timezone, currency, and onboarding status to users."""
+"""Add timezone to users."""
 
 from alembic import op
 import sqlalchemy as sa
@@ -19,27 +19,7 @@ def upgrade() -> None:
             server_default=sa.text("'UTC'"),
         ),
     )
-    op.add_column(
-        "users",
-        sa.Column(
-            "currency",
-            sa.String(length=3),
-            nullable=False,
-            server_default=sa.text("'INR'"),
-        ),
-    )
-    op.add_column(
-        "users",
-        sa.Column(
-            "onboarding_completed",
-            sa.Boolean(),
-            nullable=False,
-            server_default=sa.text("false"),
-        ),
-    )
 
 
 def downgrade() -> None:
-    op.drop_column("users", "onboarding_completed")
-    op.drop_column("users", "currency")
     op.drop_column("users", "timezone")

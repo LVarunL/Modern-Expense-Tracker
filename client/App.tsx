@@ -21,6 +21,7 @@ import { navigationRef } from "./src/navigation/navigationRef";
 import { queryClient } from "./src/queryClient";
 import { AuthProvider } from "./src/state/auth";
 import { FeedFiltersProvider } from "./src/state/feedFilters";
+import { TutorialFlowProvider } from "./src/state/tutorialFlow";
 import { setPendingVoiceCapture } from "./src/state/voiceIntent";
 
 export default function App() {
@@ -52,7 +53,9 @@ export default function App() {
         setPendingVoiceCapture(true);
       }
     };
-    Linking.getInitialURL().then(handleUrl).catch(() => {});
+    Linking.getInitialURL()
+      .then(handleUrl)
+      .catch(() => {});
     const subscription = Linking.addEventListener("url", ({ url }) =>
       handleUrl(url)
     );
@@ -68,14 +71,16 @@ export default function App() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <FeedFiltersProvider>
-              <ToastProvider>
-                <NavigationContainer ref={navigationRef}>
-                  <StatusBar style="dark" />
-                  <RootNavigator />
-                </NavigationContainer>
-              </ToastProvider>
-            </FeedFiltersProvider>
+            <TutorialFlowProvider>
+              <FeedFiltersProvider>
+                <ToastProvider>
+                  <NavigationContainer ref={navigationRef}>
+                    <StatusBar style="dark" />
+                    <RootNavigator />
+                  </NavigationContainer>
+                </ToastProvider>
+              </FeedFiltersProvider>
+            </TutorialFlowProvider>
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

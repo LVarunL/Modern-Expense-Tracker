@@ -19,6 +19,7 @@ import { getErrorMessage } from "../api";
 import { AppHeader } from "../components/AppHeader";
 import { Screen } from "../components/Screen";
 import { TimeRangeFilter } from "../components/TimeRangeFilter";
+import { TutorialTooltip } from "../components/TutorialTooltip";
 import {
   BarChart,
   ChartCard,
@@ -34,6 +35,7 @@ import {
   useAnalyticsTypes,
 } from "../hooks/useAnalytics";
 import { useAnalyticsRange } from "../hooks/useAnalyticsRange";
+import { useTutorial } from "../hooks/useTutorial";
 import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import {
@@ -79,6 +81,7 @@ export function AnalyticsHomeScreen() {
   const isCompact = width < 360;
   const isNarrow = width < 390;
   const currency = useUserCurrency();
+  const tutorial = useTutorial("analytics", 3);
   const [layout, setLayout] = useState<AnalyticsLayout>({
     order: DEFAULT_ANALYTICS_ORDER,
     hidden: [],
@@ -374,26 +377,49 @@ export function AnalyticsHomeScreen() {
         <AppHeader title="Analytics" subtitle={label} showAccount />
 
         <View style={styles.topStack}>
-          <TimeRangeFilter
-            value={range}
-            onChange={setRange}
-            compact={isCompact}
-          />
+          <TutorialTooltip
+            visible={tutorial.isVisible && tutorial.stepIndex === 0}
+            step={1}
+            total={3}
+            title="Choose a time range"
+            body="Filter analytics by day, month, or custom ranges."
+            placement="bottom"
+            onNext={tutorial.next}
+            onSkip={tutorial.skip}
+          >
+            <TimeRangeFilter
+              value={range}
+              onChange={setRange}
+              compact={isCompact}
+            />
+          </TutorialTooltip>
 
           <View style={styles.layoutCard}>
             <View style={styles.layoutHeader}>
               <Text style={styles.layoutTitle}>Layout</Text>
-              <Pressable
-                onPress={() => setIsEditingLayout((prev) => !prev)}
-                style={({ pressed }) => [
-                  styles.layoutAction,
-                  pressed && styles.layoutActionPressed,
-                ]}
+              <TutorialTooltip
+                visible={tutorial.isVisible && tutorial.stepIndex === 2}
+                step={3}
+                total={3}
+                title="Customize the layout"
+                body="Reorder or hide cards to match your workflow."
+                placement="bottom"
+                onNext={tutorial.next}
+                onSkip={tutorial.skip}
+                fullWidth={false}
               >
-                <Text style={styles.layoutActionText}>
-                  {isEditingLayout ? "Done" : "Edit"}
-                </Text>
-              </Pressable>
+                <Pressable
+                  onPress={() => setIsEditingLayout((prev) => !prev)}
+                  style={({ pressed }) => [
+                    styles.layoutAction,
+                    pressed && styles.layoutActionPressed,
+                  ]}
+                >
+                  <Text style={styles.layoutActionText}>
+                    {isEditingLayout ? "Done" : "Edit"}
+                  </Text>
+                </Pressable>
+              </TutorialTooltip>
             </View>
             {isEditingLayout ? (
               <View style={styles.layoutList}>
@@ -444,35 +470,50 @@ export function AnalyticsHomeScreen() {
 
         {hasRange ? (
           <>
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Inflow</Text>
-                <Text style={[styles.summaryValue, styles.summaryValueInflow]}>
-                  {formatCurrencyValue(summary?.total_inflow ?? 0, currency)}
-                </Text>
+            <TutorialTooltip
+              visible={tutorial.isVisible && tutorial.stepIndex === 1}
+              step={2}
+              total={3}
+              title="Read the totals"
+              body="See inflow, outflow, and net at a glance."
+              placement="bottom"
+              onNext={tutorial.next}
+              onSkip={tutorial.skip}
+            >
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Inflow</Text>
+                  <Text
+                    style={[styles.summaryValue, styles.summaryValueInflow]}
+                  >
+                    {formatCurrencyValue(summary?.total_inflow ?? 0, currency)}
+                  </Text>
+                </View>
+                <View style={styles.summaryDivider} />
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Outflow</Text>
+                  <Text
+                    style={[styles.summaryValue, styles.summaryValueOutflow]}
+                  >
+                    {formatCurrencyValue(summary?.total_outflow ?? 0, currency)}
+                  </Text>
+                </View>
+                <View style={styles.summaryDivider} />
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Net</Text>
+                  <Text
+                    style={[
+                      styles.summaryValue,
+                      netDirection === "inflow"
+                        ? styles.summaryValueInflow
+                        : styles.summaryValueOutflow,
+                    ]}
+                  >
+                    {formatCurrency(Math.abs(netValue), netDirection, currency)}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.summaryDivider} />
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Outflow</Text>
-                <Text style={[styles.summaryValue, styles.summaryValueOutflow]}>
-                  {formatCurrencyValue(summary?.total_outflow ?? 0, currency)}
-                </Text>
-              </View>
-              <View style={styles.summaryDivider} />
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Net</Text>
-                <Text
-                  style={[
-                    styles.summaryValue,
-                    netDirection === "inflow"
-                      ? styles.summaryValueInflow
-                      : styles.summaryValueOutflow,
-                  ]}
-                >
-                  {formatCurrency(Math.abs(netValue), netDirection, currency)}
-                </Text>
-              </View>
-            </View>
+            </TutorialTooltip>
 
             {visibleCards.map((id) => renderCard(id))}
 
