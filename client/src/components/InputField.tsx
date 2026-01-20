@@ -17,6 +17,9 @@ interface InputFieldProps {
   textContentType?: TextInputProps["textContentType"];
   returnKeyType?: TextInputProps["returnKeyType"];
   onSubmitEditing?: () => void;
+  classes?: {
+    input?: TextInputProps["style"];
+  };
 }
 
 export function InputField({
@@ -32,6 +35,7 @@ export function InputField({
   returnKeyType,
   onSubmitEditing,
   children,
+  classes,
 }: PropsWithChildren<InputFieldProps>) {
   const hasActions = Boolean(children);
 
@@ -48,7 +52,7 @@ export function InputField({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.steel}
-        style={[styles.input, multiline && styles.multiline]}
+        style={[styles.input, multiline && styles.multiline, classes?.input]}
         multiline={multiline}
         textAlignVertical={multiline ? "top" : "center"}
         secureTextEntry={secureTextEntry}

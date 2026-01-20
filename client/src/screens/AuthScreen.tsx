@@ -167,6 +167,9 @@ export function AuthScreen() {
             autoCorrect={false}
             textContentType="emailAddress"
             returnKeyType="next"
+            classes={{
+              input: styles.emailInput,
+            }}
           />
           <InputField
             value={password}
@@ -332,5 +335,8 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.sm,
     color: colors.danger,
+  },
+  emailInput: {
+    flex: 0,
   },
 });
