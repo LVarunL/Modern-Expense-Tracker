@@ -1,26 +1,29 @@
 import type { TransactionDirection } from "../api/types";
+import { getCurrencySymbol } from "./currency";
 import { normalizeEpochMs } from "./time";
 
 export function formatCurrency(
   amount: number,
   direction: TransactionDirection,
-  currencySymbol = "₹"
+  currencyCode = "INR"
 ): string {
+  const symbol = getCurrencySymbol(currencyCode);
   const sign = direction === "outflow" ? "-" : "+";
   const formatted = Number.isFinite(amount)
-    ? amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })
+    ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 })
     : "0";
-  return `${sign}${currencySymbol}${formatted}`;
+  return `${sign}${symbol}${formatted}`;
 }
 
 export function formatCurrencyValue(
   amount: number,
-  currencySymbol = "₹"
+  currencyCode = "INR"
 ): string {
+  const symbol = getCurrencySymbol(currencyCode);
   const formatted = Number.isFinite(amount)
-    ? amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })
+    ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 })
     : "0";
-  return `${currencySymbol}${formatted}`;
+  return `${symbol}${formatted}`;
 }
 
 export function formatDateTime(

@@ -17,6 +17,7 @@ import { BarChart, ChartCard, ChartLegend } from "../components/charts";
 import { TRANSACTION_TYPE_LABELS } from "../constants/transactions";
 import { useAnalyticsTypes } from "../hooks/useAnalytics";
 import { useAnalyticsRange } from "../hooks/useAnalyticsRange";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -31,6 +32,7 @@ export function AnalyticsTypesScreen() {
   const route = useRoute<RouteProp<RootStackParamList, "AnalyticsTypes">>();
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const currency = useUserCurrency();
 
   const { range, setRange, error, resolved, label } = useAnalyticsRange(
     route.params?.range
@@ -53,7 +55,7 @@ export function AnalyticsTypesScreen() {
   const buildLegend = (list: typeof outflow, palette: string[]) =>
     list.map((item, index) => ({
       label: TRANSACTION_TYPE_LABELS[item.type] ?? item.type,
-      value: formatCurrencyValue(Number(item.total)),
+      value: formatCurrencyValue(Number(item.total), currency),
       color: palette[index % palette.length],
     }));
 

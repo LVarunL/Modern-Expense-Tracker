@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class LLMTransaction(BaseModel):
     amount: float
-    currency: str = "INR"
+    currency: str = ""
     direction: str
     type: str
     category: str

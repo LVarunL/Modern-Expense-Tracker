@@ -46,14 +46,14 @@ async def test_parse_requires_text(client) -> None:
 
 async def test_parse_auto_confirms_transactions(app, db_session) -> None:
     class AutoParser:
-        async def parse(self, *, raw_text: str, reference_datetime):
+        async def parse(self, *, raw_text: str, reference_datetime, default_currency: str):
             preview = {
                 "entry_summary": f"Parsed: {raw_text}",
                 "occurred_at": reference_datetime,
                 "transactions": [
                     {
                         "amount": Decimal("250.00"),
-                        "currency": "INR",
+                        "currency": default_currency,
                         "direction": TransactionDirection.outflow,
                         "type": TransactionType.expense,
                         "category": "Food & Drinks",
@@ -93,7 +93,7 @@ async def test_parse_auto_confirms_transactions(app, db_session) -> None:
 
 async def test_parse_handles_parser_failure(app) -> None:
     class ErrorParser:
-        async def parse(self, *, raw_text: str, reference_datetime):
+        async def parse(self, *, raw_text: str, reference_datetime, default_currency: str):
             raise ParserError("boom")
 
     app.dependency_overrides[get_parser] = lambda: ErrorParser()

@@ -25,12 +25,14 @@ import {
   TRANSACTION_TYPES,
   TRANSACTION_TYPE_LABELS,
 } from "../constants/transactions";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import { useFeedFilters } from "../state/feedFilters";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 import { useEntranceAnimation } from "../utils/animations";
+import { getCurrencySymbol } from "../utils/currency";
 import { sanitizeAmountInput } from "../utils/format";
 import { validateTimeRange } from "../utils/timeRange";
 
@@ -49,6 +51,8 @@ export function FilterModalScreen() {
   const animation = useEntranceAnimation(18);
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const currency = useUserCurrency();
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [draft, setDraft] = useState(filters);
   const [error, setError] = useState<string | null>(null);
@@ -222,7 +226,7 @@ export function FilterModalScreen() {
           <View style={styles.amountField}>
             <Text style={styles.amountLabel}>Min amount</Text>
             <View style={styles.amountInput}>
-              <Text style={styles.currency}>₹</Text>
+              <Text style={styles.currency}>{currencySymbol}</Text>
               <TextInput
                 value={draft.minAmount}
                 onChangeText={(value) =>
@@ -241,7 +245,7 @@ export function FilterModalScreen() {
           <View style={styles.amountField}>
             <Text style={styles.amountLabel}>Max amount</Text>
             <View style={styles.amountInput}>
-              <Text style={styles.currency}>₹</Text>
+              <Text style={styles.currency}>{currencySymbol}</Text>
               <TextInput
                 value={draft.maxAmount}
                 onChangeText={(value) =>

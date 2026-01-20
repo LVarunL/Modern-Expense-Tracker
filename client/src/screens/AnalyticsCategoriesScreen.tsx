@@ -18,6 +18,7 @@ import { Screen } from "../components/Screen";
 import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import { useAnalyticsCategories } from "../hooks/useAnalytics";
 import { useAnalyticsRange } from "../hooks/useAnalyticsRange";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -36,6 +37,7 @@ export function AnalyticsCategoriesScreen() {
     useRoute<RouteProp<RootStackParamList, "AnalyticsCategories">>();
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const currency = useUserCurrency();
 
   const { range, setRange, error, resolved, label } = useAnalyticsRange(
     route.params?.range
@@ -135,7 +137,11 @@ export function AnalyticsCategoriesScreen() {
                         </Text>
                         <View style={styles.categoryMeta}>
                           <Text style={styles.categoryValue}>
-                            {formatCurrency(item.total, item.direction)}
+                            {formatCurrency(
+                              item.total,
+                              item.direction,
+                              currency
+                            )}
                           </Text>
                           <Ionicons
                             name="chevron-forward"
@@ -191,7 +197,7 @@ export function AnalyticsCategoriesScreen() {
                               styles.categoryValueInflow,
                             ]}
                           >
-                            {formatCurrencyValue(Number(item.total))}
+                            {formatCurrencyValue(Number(item.total), currency)}
                           </Text>
                           <Ionicons
                             name="chevron-forward"

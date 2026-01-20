@@ -45,6 +45,7 @@ async def create_user(
     email: str,
     password_hash: str | None,
     timezone: str | None = None,
+    currency: str | None = None,
     user_id: uuid.UUID | None = None,
 ) -> User:
     user = User(
@@ -52,6 +53,7 @@ async def create_user(
         email=normalize_email(email),
         password_hash=password_hash,
         timezone=timezone or "UTC",
+        currency=currency or "INR",
     )
     session.add(user)
     await session.commit()

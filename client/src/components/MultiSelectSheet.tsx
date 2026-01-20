@@ -26,6 +26,7 @@ interface MultiSelectSheetProps<TId extends string> {
   selectedIds: TId[];
   onChange: (selected: TId[]) => void;
   onClose: () => void;
+  selectionMode?: "multi" | "single";
 }
 
 export function MultiSelectSheet<TId extends string>({
@@ -35,11 +36,16 @@ export function MultiSelectSheet<TId extends string>({
   selectedIds,
   onChange,
   onClose,
+  selectionMode = "multi",
 }: MultiSelectSheetProps<TId>) {
   const insets = useSafeAreaInsets();
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   const toggle = (id: TId) => {
+    if (selectionMode === "single") {
+      onChange([id]);
+      return;
+    }
     const next = new Set(selectedSet);
     if (next.has(id)) {
       next.delete(id);
@@ -66,7 +72,7 @@ export function MultiSelectSheet<TId extends string>({
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.headerActions}>
-              {selectedIds.length ? (
+              {selectionMode === "multi" && selectedIds.length ? (
                 <Pressable
                   onPress={clear}
                   style={({ pressed }) => [

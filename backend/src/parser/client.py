@@ -34,8 +34,9 @@ class OpenAIChatClient:
         self,
         raw_text: str,
         reference_datetime: str,
+        default_currency: str,
     ) -> list[dict[str, str]]:
-        system_message = build_system_message()
+        system_message = build_system_message(default_currency)
         messages: list[dict[str, str]] = [{"role": "system", "content": system_message}]
         for example in FEW_SHOT_EXAMPLES:
             messages.append({"role": "user", "content": example["input"]})
@@ -54,8 +55,9 @@ class OpenAIChatClient:
         *,
         raw_text: str,
         reference_datetime: str,
+        default_currency: str,
     ) -> dict[str, Any]:
-        messages = self._build_messages(raw_text, reference_datetime)
+        messages = self._build_messages(raw_text, reference_datetime, default_currency)
         payload = {
             "model": self._model,
             "messages": messages,
@@ -102,6 +104,7 @@ class GeminiClient:
         self,
         raw_text: str,
         reference_datetime: str,
+        default_currency: str,
     ) -> list[dict[str, object]]:
         contents: list[dict[str, Any]] = []
         for example in FEW_SHOT_EXAMPLES:
@@ -125,11 +128,14 @@ class GeminiClient:
         *,
         raw_text: str,
         reference_datetime: str,
+        default_currency: str,
     ) -> dict[str, Any]:
-        contents = self._build_contents(raw_text, reference_datetime)
+        contents = self._build_contents(raw_text, reference_datetime, default_currency)
         payload = {
             "contents": contents,
-            "systemInstruction": {"parts": [{"text": build_system_message()}]},
+            "systemInstruction": {
+                "parts": [{"text": build_system_message(default_currency)}]
+            },
             "generationConfig": {
                 "temperature": self._temperature,
                 "responseMimeType": "application/json",

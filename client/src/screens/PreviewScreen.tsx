@@ -23,6 +23,7 @@ import {
   TYPE_CATEGORY_MAP,
   TYPE_DIRECTION_MAP,
 } from "../constants/transactions";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -39,6 +40,7 @@ export function PreviewScreen() {
   const animation = useEntranceAnimation(20);
   const queryClient = useQueryClient();
   const toast = useToast();
+  const currency = useUserCurrency();
 
   const [draftTransactions, setDraftTransactions] = useState<
     EditableTransaction[]
@@ -46,7 +48,7 @@ export function PreviewScreen() {
     preview.transactions.map((transaction, index) => ({
       id: `tx-${index}`,
       amountInput: String(transaction.amount),
-      currency: transaction.currency ?? "INR",
+      currency,
       direction: transaction.direction,
       type: transaction.type,
       category: transaction.category,
@@ -117,7 +119,7 @@ export function PreviewScreen() {
         transactions: activeTransactions.map((item) => ({
           occurred_time: occurredAt,
           amount: parseAmount(item.amountInput),
-          currency: item.currency ?? "INR",
+          currency,
           direction: item.direction,
           type: item.type,
           category: item.category,

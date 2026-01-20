@@ -50,6 +50,8 @@ class UserOut(APIModel):
     email: str
     has_password: bool
     timezone: str
+    currency: str
+    onboarding_completed: bool
 
 
 class AuthResponse(APIModel):
@@ -90,7 +92,9 @@ class DeleteAccountRequest(APIModel):
 
 
 class UpdateMeRequest(APIModel):
-    timezone: str
+    timezone: str | None = None
+    currency: str | None = None
+    onboarding_completed: bool | None = None
 
 
 class ForgotPasswordRequest(APIModel):
@@ -118,6 +122,8 @@ def user_out(user: User) -> UserOut:
         email=user.email,
         has_password=bool(user.password_hash),
         timezone=user.timezone,
+        currency=user.currency,
+        onboarding_completed=user.onboarding_completed,
     )
 
 
@@ -460,14 +466,34 @@ async def update_me(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> UserOut:
-    try:
-        ZoneInfo(payload.timezone)
-    except Exception as exc:  # noqa: BLE001
+    if (
+        payload.timezone is None
+        and payload.currency is None
+        and payload.onboarding_completed is None
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid timezone. Use an IANA name like 'Asia/Kolkata'.",
-        ) from exc
-    current_user.timezone = payload.timezone
+            detail="Provide timezone, currency, or onboarding status to update.",
+        )
+    if payload.timezone:
+        try:
+            ZoneInfo(payload.timezone)
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid timezone. Use an IANA name like 'Asia/Kolkata'.",
+            ) from exc
+        current_user.timezone = payload.timezone
+    if payload.currency:
+        currency = payload.currency.strip().upper()
+        if len(currency) != 3 or not currency.isalpha():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid currency code. Use a 3-letter ISO code.",
+            )
+        current_user.currency = currency
+    if payload.onboarding_completed is not None:
+        current_user.onboarding_completed = payload.onboarding_completed
     session.add(current_user)
     await session.commit()
     await session.refresh(current_user)

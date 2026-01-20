@@ -4,6 +4,7 @@ import type { TransactionDirection, TransactionType } from "../api/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
+import { getCurrencySymbol } from "../utils/currency";
 import { sanitizeAmountInput } from "../utils/format";
 
 export interface EditableTransaction {
@@ -47,6 +48,7 @@ export function EditableTransactionCard({
   title,
 }: EditableTransactionCardProps) {
   const headerTitle = title ?? `Transaction ${index + 1}`;
+  const currencySymbol = getCurrencySymbol(item.currency);
 
   return (
     <View style={[styles.card, item.isDeleted && styles.cardDeleted]}>
@@ -81,7 +83,7 @@ export function EditableTransactionCard({
                 amountError && styles.amountInputError,
               ]}
             >
-              <Text style={styles.currency}>₹</Text>
+              <Text style={styles.currency}>{currencySymbol}</Text>
               <TextInput
                 value={item.amountInput}
                 onChangeText={(value) =>

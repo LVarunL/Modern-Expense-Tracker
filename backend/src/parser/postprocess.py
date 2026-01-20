@@ -80,7 +80,13 @@ def _apply_amount_rules(
     return amount, assumptions, needs_confirmation
 
 
-def post_process(parsed: LLMParseOutput, raw_text: str) -> dict[str, object]:
+def post_process(
+    parsed: LLMParseOutput,
+    raw_text: str,
+    *,
+    default_currency: str = "INR",
+) -> dict[str, object]:
+    default_currency = default_currency.strip().upper() or "INR"
     entry_assumptions: list[str] = []
     entry_needs_confirmation = parsed.needs_confirmation
     split_count = _detect_split_count(raw_text)
@@ -88,7 +94,7 @@ def post_process(parsed: LLMParseOutput, raw_text: str) -> dict[str, object]:
     processed_transactions: list[dict[str, object]] = []
 
     for tx in parsed.transactions:
-        processed = _process_transaction(tx, split_count)
+        processed = _process_transaction(tx, split_count, default_currency)
         processed_transactions.append(processed)
         if processed["needs_confirmation"]:
             entry_needs_confirmation = True
@@ -112,6 +118,7 @@ def post_process(parsed: LLMParseOutput, raw_text: str) -> dict[str, object]:
 def _process_transaction(
     tx: LLMTransaction,
     split_count: int | None,
+    default_currency: str,
 ) -> dict[str, object]:
     assumptions = list(tx.assumptions)
     needs_confirmation = tx.needs_confirmation
@@ -153,9 +160,20 @@ def _process_transaction(
         assumptions.append(f"Split assumed {split_count} people.")
         needs_confirmation = True
 
+    currency = default_currency
+    if tx.currency:
+        requested_currency = tx.currency.strip().upper()
+        if (
+            len(requested_currency) != 3
+            or not requested_currency.isalpha()
+            or requested_currency != default_currency
+        ):
+            assumptions.append("Currency adjusted to match your default.")
+            needs_confirmation = True
+
     return {
         "amount": amount,
-        "currency": tx.currency or "INR",
+        "currency": currency,
         "direction": direction,
         "type": transaction_type,
         "category": category,

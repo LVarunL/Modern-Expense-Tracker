@@ -18,17 +18,19 @@ import {
   subscribePendingVoiceCapture,
 } from "../state/voiceIntent";
 import { navigationRef } from "./navigationRef";
+import { OnboardingNavigator } from "./OnboardingNavigator";
 import { TabNavigator } from "./TabNavigator";
 import type { RootStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const needsOnboarding = isAuthenticated && !user?.onboarding_completed;
 
   useEffect(() => {
     const handlePendingVoice = () => {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || needsOnboarding) {
         return;
       }
       if (!navigationRef.isReady()) {
@@ -44,7 +46,7 @@ export function RootNavigator() {
     };
     handlePendingVoice();
     return subscribePendingVoiceCapture(handlePendingVoice);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, needsOnboarding]);
 
   if (isLoading) {
     return null;
@@ -54,7 +56,11 @@ export function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
         <>
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          {needsOnboarding ? (
+            <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
+          ) : (
+            <Stack.Screen name="MainTabs" component={TabNavigator} />
+          )}
           <Stack.Screen
             name="PreviewModal"
             component={PreviewScreen}

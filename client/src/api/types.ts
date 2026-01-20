@@ -166,6 +166,8 @@ export interface AuthUser {
   email: string;
   has_password: boolean;
   timezone: string;
+  currency: string;
+  onboarding_completed: boolean;
 }
 
 export interface AuthResponse {
@@ -203,7 +205,9 @@ export interface DeleteAccountRequest {
 }
 
 export interface UpdateMeRequest {
-  timezone: string;
+  timezone?: string;
+  currency?: string;
+  onboarding_completed?: boolean;
 }
 
 export interface MessageResponse {

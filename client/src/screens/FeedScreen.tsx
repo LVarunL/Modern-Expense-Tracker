@@ -25,6 +25,7 @@ import {
   TransactionSortId,
 } from "../constants/sorting";
 import { TRANSACTION_TYPE_LABELS } from "../constants/transactions";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
 import { useFeedFilters } from "../state/feedFilters";
 import { colors } from "../theme/colors";
@@ -45,6 +46,7 @@ export function FeedScreen() {
   const { filters, resetFilters } = useFeedFilters();
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const currency = useUserCurrency();
   const listRef = useRef<FlatList<TransactionOut>>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -122,7 +124,7 @@ export function FeedScreen() {
                       item.direction === "inflow" && styles.amountInflow,
                     ]}
                   >
-                    {formatCurrency(item.amount, item.direction)}
+                    {formatCurrency(item.amount, item.direction, currency)}
                   </Text>
                 </View>
               </View>

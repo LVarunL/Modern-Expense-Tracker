@@ -56,11 +56,13 @@ class LLMParser:
         *,
         raw_text: str,
         reference_datetime: datetime,
+        default_currency: str,
     ) -> ParsedResult:
         try:
             raw_output = await self._client.parse(
                 raw_text=raw_text,
                 reference_datetime=reference_datetime.isoformat(),
+                default_currency=default_currency,
             )
         except LLMClientError as exc:
             raise ParserError(str(exc)) from exc
@@ -70,7 +72,7 @@ class LLMParser:
         except ValidationError as exc:
             raise ParserError(f"LLM output validation failed: {exc}") from exc
 
-        post_processed = post_process(parsed, raw_text)
+        post_processed = post_process(parsed, raw_text, default_currency=default_currency)
         return ParsedResult(
             preview=post_processed,
             raw_output=raw_output,

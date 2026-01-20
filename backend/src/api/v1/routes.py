@@ -111,6 +111,7 @@ async def parse_text(
         tzinfo = ZoneInfo(tz_name)
     except Exception:  # noqa: BLE001
         tzinfo = ZoneInfo("UTC")
+    default_currency = (current_user.currency or "INR").upper()
     reference_datetime = payload.reference_datetime
     if reference_datetime is None:
         reference_datetime = datetime.now(tzinfo)
@@ -120,6 +121,7 @@ async def parse_text(
         result = await parser.parse(
             raw_text=payload.raw_text,
             reference_datetime=reference_datetime,
+            default_currency=default_currency,
         )
     except ParserError as exc:
         raise HTTPException(
@@ -193,12 +195,13 @@ async def confirm_entry(
             detail="Entry not found",
         )
 
+    default_currency = (current_user.currency or "INR").upper()
     transaction_inputs = [
         TransactionCreate(
             entry_id=entry.id,
             occurred_at=item.occurred_time,
             amount=item.amount,
-            currency=item.currency,
+            currency=default_currency,
             direction=item.direction,
             type=item.type,
             category=item.category,
@@ -279,7 +282,7 @@ async def update_transaction_route(
             transaction=transaction,
             update=TransactionUpdate(
                 amount=payload.amount,
-                currency=payload.currency,
+                currency=(current_user.currency or "INR").upper(),
                 direction=payload.direction,
                 type=payload.type,
                 category=payload.category,

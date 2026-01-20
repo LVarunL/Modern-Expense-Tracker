@@ -17,6 +17,7 @@ import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import { ChartCard, LineSeriesChart } from "../components/charts";
 import { useAnalyticsSeries, useAnalyticsSummary } from "../hooks/useAnalytics";
 import { useAnalyticsRange } from "../hooks/useAnalyticsRange";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -33,6 +34,7 @@ export function AnalyticsCategoryDetailScreen() {
     useRoute<RouteProp<RootStackParamList, "AnalyticsCategoryDetail">>();
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const currency = useUserCurrency();
 
   const { category, direction } = route.params;
   const { range, setRange, error, resolved, bucket, label, tz } =
@@ -115,7 +117,7 @@ export function AnalyticsCategoryDetailScreen() {
             >
               <StatPill
                 label="Total"
-                value={formatCurrencyValue(totalForDirection)}
+                value={formatCurrencyValue(totalForDirection, currency)}
               />
               <StatPill
                 label="Transactions"
@@ -124,7 +126,7 @@ export function AnalyticsCategoryDetailScreen() {
             </View>
             <StatPill
               label="Net"
-              value={formatCurrency(Math.abs(netValue), netDirection)}
+              value={formatCurrency(Math.abs(netValue), netDirection, currency)}
               tone="accent"
             />
 
@@ -135,6 +137,7 @@ export function AnalyticsCategoryDetailScreen() {
               <LineSeriesChart
                 data={lineData}
                 formatXLabel={(value) => formatBucketLabel(bucket, value)}
+                formatYLabel={(value) => formatCurrencyValue(value, currency)}
               />
             </ChartCard>
           </>

@@ -27,11 +27,13 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
 import { useToast } from "../components/ToastProvider";
 import { featureFlags } from "../config/featureFlags";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList, TabParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 import { useEntranceAnimation } from "../utils/animations";
+import { formatCurrencyValue } from "../utils/format";
 
 const promptSuggestions = [
   "Dinner 600 and dessert 200, movie 350",
@@ -47,6 +49,7 @@ export function CaptureScreen() {
   const route = useRoute<RouteProp<TabParamList, "Capture">>();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const currency = useUserCurrency();
   const [text, setText] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -321,7 +324,9 @@ export function CaptureScreen() {
                     style={styles.previewRow}
                   >
                     <Text style={styles.previewRowLabel}>{item.category}</Text>
-                    <Text style={styles.previewRowAmount}>₹{item.amount}</Text>
+                    <Text style={styles.previewRowAmount}>
+                      {formatCurrencyValue(Number(item.amount), currency)}
+                    </Text>
                   </View>
                 ))
               : previewItems.map((item) => (

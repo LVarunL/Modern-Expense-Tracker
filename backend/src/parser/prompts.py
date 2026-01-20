@@ -39,59 +39,57 @@ DEFAULT_CURRENCY = "INR"
 
 SYSTEM_PROMPT = "You are an expense parsing engine."
 
-SCHEMA_SKELETON = {
-    "entry_summary": None,
-    "occurred_at": None,
-    "transactions": [
-        {
-            "amount": 0,
-            "currency": "INR",
-            "direction": "outflow",
-            "type": "expense",
-            "category": "Other",
-            "needs_confirmation": False,
-            "assumptions": [],
-        }
-    ],
-    "needs_confirmation": False,
-    "assumptions": [],
-}
-
-SYSTEM_RULES = [
-    "Output must be a single JSON object. Keys must match the schema skeleton exactly.",
-    "Include all top-level keys, even if values are null or empty.",
-    "Each transaction must include all transaction keys. No additional keys anywhere.",
-    "Return JSON only. No markdown or commentary.",
-    "Allowed categories: " + ", ".join(ALLOWED_CATEGORIES),
-    "Allowed types: " + ", ".join(ALLOWED_TYPES),
-    "Allowed direction: inflow or outflow only.",
-    f"Default currency is {DEFAULT_CURRENCY} unless explicitly another currency.",
-    "Amount must be positive. Do not use negative numbers.",
-    "If type='income' => category='Income'.",
-    "If type='investment_income' => category='Investments'.",
-    "If type in ('repayment_received','repayment_sent') => category='Loans'.",
-    "If type='transfer' => category='Transfer'.",
-    "If multiple distinct spends/incomes with different amounts, output multiple transactions.",
-    "If multiple amounts refer to one total, output one transaction and add an assumption.",
-    "Parse amounts like '1,300', '₹1300', '1300 rs', 'rs 1300'.",
-    "Parse suffixes like '1.2k' => 1200 and '85k' => 85000.",
-    "Do not invent or round amounts unless text says 'approx/around'; then add assumption and confirmation.",
-    "Use reference_datetime to resolve relative dates like 'yesterday' or 'today'.",
-    "If relative date is used but reference_datetime missing, set occurred_at=null and add an assumption.",
-    "If no date/time is specified, occurred_at must be null.",
-    "If a date is specified without a time, set time to 00:00 and add an assumption.",
-    "Assumptions only when you had to assume (split ratio, taxes included, approx amount, date/time default).",
-    "Assumptions must be short (one sentence max).",
-    "If an assumption affects money/type/category/share, set needs_confirmation=true for that transaction.",
-    "Top-level assumptions must include all transaction assumptions.",
-    "If there are no transactions, use top-level assumptions for missing info (e.g., amount missing).",
-    "Top-level needs_confirmation is true if any transaction needs confirmation.",
-]
-
-
-def build_system_message() -> str:
-    schema_text = json.dumps(SCHEMA_SKELETON, ensure_ascii=True)
-    rules_text = "\n".join(f"- {rule}" for rule in SYSTEM_RULES)
+def build_system_message(default_currency: str = DEFAULT_CURRENCY) -> str:
+    currency = (default_currency or DEFAULT_CURRENCY).upper()
+    schema_skeleton = {
+        "entry_summary": None,
+        "occurred_at": None,
+        "transactions": [
+            {
+                "amount": 0,
+                "currency": currency,
+                "direction": "outflow",
+                "type": "expense",
+                "category": "Other",
+                "needs_confirmation": False,
+                "assumptions": [],
+            }
+        ],
+        "needs_confirmation": False,
+        "assumptions": [],
+    }
+    system_rules = [
+        "Output must be a single JSON object. Keys must match the schema skeleton exactly.",
+        "Include all top-level keys, even if values are null or empty.",
+        "Each transaction must include all transaction keys. No additional keys anywhere.",
+        "Return JSON only. No markdown or commentary.",
+        "Allowed categories: " + ", ".join(ALLOWED_CATEGORIES),
+        "Allowed types: " + ", ".join(ALLOWED_TYPES),
+        "Allowed direction: inflow or outflow only.",
+        f"Default currency is {currency} unless explicitly another currency.",
+        "Amount must be positive. Do not use negative numbers.",
+        "If type='income' => category='Income'.",
+        "If type='investment_income' => category='Investments'.",
+        "If type in ('repayment_received','repayment_sent') => category='Loans'.",
+        "If type='transfer' => category='Transfer'.",
+        "If multiple distinct spends/incomes with different amounts, output multiple transactions.",
+        "If multiple amounts refer to one total, output one transaction and add an assumption.",
+        "Parse amounts like '1,300', '₹1300', '1300 rs', 'rs 1300'.",
+        "Parse suffixes like '1.2k' => 1200 and '85k' => 85000.",
+        "Do not invent or round amounts unless text says 'approx/around'; then add assumption and confirmation.",
+        "Use reference_datetime to resolve relative dates like 'yesterday' or 'today'.",
+        "If relative date is used but reference_datetime missing, set occurred_at=null and add an assumption.",
+        "If no date/time is specified, occurred_at must be null.",
+        "If a date is specified without a time, set time to 00:00 and add an assumption.",
+        "Assumptions only when you had to assume (split ratio, taxes included, approx amount, date/time default).",
+        "Assumptions must be short (one sentence max).",
+        "If an assumption affects money/type/category/share, set needs_confirmation=true for that transaction.",
+        "Top-level assumptions must include all transaction assumptions.",
+        "If there are no transactions, use top-level assumptions for missing info (e.g., amount missing).",
+        "Top-level needs_confirmation is true if any transaction needs confirmation.",
+    ]
+    schema_text = json.dumps(schema_skeleton, ensure_ascii=True)
+    rules_text = "\n".join(f"- {rule}" for rule in system_rules)
     return f"{SYSTEM_PROMPT}\n\nSchema skeleton:\n{schema_text}\n\nRules:\n{rules_text}"
 
 

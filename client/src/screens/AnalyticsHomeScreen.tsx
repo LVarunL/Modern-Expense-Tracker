@@ -34,6 +34,7 @@ import {
   useAnalyticsTypes,
 } from "../hooks/useAnalytics";
 import { useAnalyticsRange } from "../hooks/useAnalyticsRange";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import {
   DEFAULT_ANALYTICS_ORDER,
@@ -77,6 +78,7 @@ export function AnalyticsHomeScreen() {
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
   const isNarrow = width < 390;
+  const currency = useUserCurrency();
   const [layout, setLayout] = useState<AnalyticsLayout>({
     order: DEFAULT_ANALYTICS_ORDER,
     hidden: [],
@@ -151,7 +153,7 @@ export function AnalyticsHomeScreen() {
     () =>
       topOutflowTypes.map((item, index) => ({
         label: TRANSACTION_TYPE_LABELS[item.type] ?? item.type,
-        value: formatCurrencyValue(Number(item.total)),
+        value: formatCurrencyValue(Number(item.total), currency),
         color: typePalette[index % typePalette.length],
       })),
     [topOutflowTypes]
@@ -206,6 +208,7 @@ export function AnalyticsHomeScreen() {
             <LineSeriesChart
               data={lineData}
               formatXLabel={(value) => formatBucketLabel(bucket, value)}
+              formatYLabel={(value) => formatCurrencyValue(value, currency)}
             />
           </ChartCard>
         );
@@ -223,7 +226,7 @@ export function AnalyticsHomeScreen() {
             <View style={[styles.donutRow, isNarrow && styles.donutRowStacked]}>
               <DonutChart
                 data={donutSegments}
-                centerValue={formatCurrencyValue(donutTotal)}
+                centerValue={formatCurrencyValue(donutTotal, currency)}
                 centerLabel="Total outflow"
                 size={150}
                 onSegmentPress={(segment) => {
@@ -273,12 +276,18 @@ export function AnalyticsHomeScreen() {
               items={[
                 {
                   label: "Inflow",
-                  value: formatCurrencyValue(summary?.total_inflow ?? 0),
+                  value: formatCurrencyValue(
+                    summary?.total_inflow ?? 0,
+                    currency
+                  ),
                   color: colors.success,
                 },
                 {
                   label: "Outflow",
-                  value: formatCurrencyValue(summary?.total_outflow ?? 0),
+                  value: formatCurrencyValue(
+                    summary?.total_outflow ?? 0,
+                    currency
+                  ),
                   color: colors.cobalt,
                 },
               ]}
@@ -341,7 +350,7 @@ export function AnalyticsHomeScreen() {
     () =>
       donutSegments.map((segment) => ({
         label: segment.label ?? "Other",
-        value: formatCurrencyValue(segment.value),
+        value: formatCurrencyValue(segment.value, currency),
         color: segment.color,
       })),
     [donutSegments]
@@ -439,14 +448,14 @@ export function AnalyticsHomeScreen() {
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryLabel}>Inflow</Text>
                 <Text style={[styles.summaryValue, styles.summaryValueInflow]}>
-                  {formatCurrencyValue(summary?.total_inflow ?? 0)}
+                  {formatCurrencyValue(summary?.total_inflow ?? 0, currency)}
                 </Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryLabel}>Outflow</Text>
                 <Text style={[styles.summaryValue, styles.summaryValueOutflow]}>
-                  {formatCurrencyValue(summary?.total_outflow ?? 0)}
+                  {formatCurrencyValue(summary?.total_outflow ?? 0, currency)}
                 </Text>
               </View>
               <View style={styles.summaryDivider} />
@@ -460,7 +469,7 @@ export function AnalyticsHomeScreen() {
                       : styles.summaryValueOutflow,
                   ]}
                 >
-                  {formatCurrency(Math.abs(netValue), netDirection)}
+                  {formatCurrency(Math.abs(netValue), netDirection, currency)}
                 </Text>
               </View>
             </View>

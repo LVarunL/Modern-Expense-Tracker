@@ -12,6 +12,7 @@ export type RootStackParamList = {
   ForgotPassword: { email?: string } | undefined;
   ResetPassword: undefined;
   AccountSettings: undefined;
+  Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   MainTabs: NavigatorScreenParams<TabParamList>;
   PreviewModal: {
     preview: ParseResponse;
@@ -29,6 +30,10 @@ export type RootStackParamList = {
   };
   AnalyticsTypes: { range?: TimeRangeFilter } | undefined;
   AnalyticsCashflow: { range?: TimeRangeFilter } | undefined;
+};
+
+export type OnboardingStackParamList = {
+  OnboardingCurrency: undefined;
 };
 
 export type TabParamList = {

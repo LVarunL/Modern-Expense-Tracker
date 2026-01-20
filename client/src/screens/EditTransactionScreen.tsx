@@ -22,6 +22,7 @@ import {
   TYPE_CATEGORY_MAP,
   TYPE_DIRECTION_MAP,
 } from "../constants/transactions";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -38,11 +39,12 @@ export function EditTransactionScreen() {
   const animation = useEntranceAnimation(18);
   const queryClient = useQueryClient();
   const toast = useToast();
+  const currency = useUserCurrency();
 
   const [draft, setDraft] = useState<EditableTransaction>(() => ({
     id: `edit-${transaction.id}`,
     amountInput: String(transaction.amount),
-    currency: transaction.currency ?? "INR",
+    currency,
     direction: transaction.direction,
     type: transaction.type,
     category: transaction.category,
@@ -62,10 +64,7 @@ export function EditTransactionScreen() {
     return null;
   })();
 
-  const currencyError =
-    draft.currency.trim().length === 3 ? null : "Use a 3-letter currency code.";
-
-  const canSave = !amountError && !currencyError && !isSaving;
+  const canSave = !amountError && !isSaving;
 
   const updateDraft = (updates: Partial<EditableTransaction>) => {
     setDraft((prev) => {
@@ -93,7 +92,7 @@ export function EditTransactionScreen() {
     try {
       await updateTransaction(transaction.id, {
         amount: parseAmount(draft.amountInput),
-        currency: draft.currency.trim().toUpperCase(),
+        currency,
         direction: draft.direction,
         type: draft.type,
         category: draft.category,
@@ -142,12 +141,8 @@ export function EditTransactionScreen() {
           onRemove={() => {}}
           onRestore={() => {}}
           allowRemove={false}
-          showCurrency
         />
 
-        {currencyError ? (
-          <Text style={styles.errorText}>{currencyError}</Text>
-        ) : null}
         {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
 
         <View style={styles.actions}>

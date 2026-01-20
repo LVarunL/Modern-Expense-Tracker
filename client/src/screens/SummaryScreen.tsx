@@ -13,6 +13,7 @@ import { AppHeader } from "../components/AppHeader";
 import { GhostButton } from "../components/GhostButton";
 import { Screen } from "../components/Screen";
 import { StatPill } from "../components/StatPill";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
@@ -39,6 +40,7 @@ export function SummaryScreen() {
   const monthParam = useMemo(() => getMonthParam(), []);
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const currency = useUserCurrency();
   const query = useQuery({
     queryKey: ["summary", monthParam],
     queryFn: () => fetchSummary(monthParam),
@@ -86,18 +88,19 @@ export function SummaryScreen() {
             >
               <StatPill
                 label="Inflow"
-                value={formatCurrencyValue(summary.total_inflow)}
+                value={formatCurrencyValue(summary.total_inflow, currency)}
               />
               <StatPill
                 label="Outflow"
-                value={formatCurrencyValue(summary.total_outflow)}
+                value={formatCurrencyValue(summary.total_outflow, currency)}
               />
             </View>
             <StatPill
               label="Net"
               value={formatCurrency(
                 Math.abs(summary.net),
-                summary.net >= 0 ? "inflow" : "outflow"
+                summary.net >= 0 ? "inflow" : "outflow",
+                currency
               )}
               tone="accent"
             />
@@ -126,7 +129,7 @@ export function SummaryScreen() {
                               styles.categoryValueInflow,
                           ]}
                         >
-                          {formatCurrency(item.total, item.direction)}
+                          {formatCurrency(item.total, item.direction, currency)}
                         </Text>
                       </View>
                       <View style={styles.barTrack}>

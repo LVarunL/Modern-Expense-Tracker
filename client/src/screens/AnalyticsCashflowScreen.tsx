@@ -21,6 +21,7 @@ import {
 } from "../components/charts";
 import { useAnalyticsSeries, useAnalyticsSummary } from "../hooks/useAnalytics";
 import { useAnalyticsRange } from "../hooks/useAnalyticsRange";
+import { useUserCurrency } from "../hooks/useUserCurrency";
 import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -36,6 +37,7 @@ export function AnalyticsCashflowScreen() {
   const route = useRoute<RouteProp<RootStackParamList, "AnalyticsCashflow">>();
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const currency = useUserCurrency();
 
   const { range, setRange, error, resolved, bucket, label, tz } =
     useAnalyticsRange(route.params?.range);
@@ -127,12 +129,18 @@ export function AnalyticsCashflowScreen() {
                 items={[
                   {
                     label: "Inflow",
-                    value: formatCurrencyValue(summary?.total_inflow ?? 0),
+                    value: formatCurrencyValue(
+                      summary?.total_inflow ?? 0,
+                      currency
+                    ),
                     color: colors.success,
                   },
                   {
                     label: "Outflow",
-                    value: formatCurrencyValue(summary?.total_outflow ?? 0),
+                    value: formatCurrencyValue(
+                      summary?.total_outflow ?? 0,
+                      currency
+                    ),
                     color: colors.cobalt,
                   },
                 ]}
@@ -144,6 +152,7 @@ export function AnalyticsCashflowScreen() {
                 data={inflowLine}
                 stroke={colors.success}
                 formatXLabel={(value) => formatBucketLabel(bucket, value)}
+                formatYLabel={(value) => formatCurrencyValue(value, currency)}
               />
             </ChartCard>
 
@@ -152,6 +161,7 @@ export function AnalyticsCashflowScreen() {
                 data={outflowLine}
                 stroke={colors.cobalt}
                 formatXLabel={(value) => formatBucketLabel(bucket, value)}
+                formatYLabel={(value) => formatCurrencyValue(value, currency)}
               />
             </ChartCard>
           </>
