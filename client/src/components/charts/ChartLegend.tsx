@@ -12,16 +12,34 @@ export type LegendItem = {
 
 type Props = {
   items: LegendItem[];
+  compact?: boolean;
 };
 
-export function ChartLegend({ items }: Props) {
+export function ChartLegend({ items, compact = false }: Props) {
   return (
     <View style={styles.container}>
       {items.map((item, index) => (
-        <View key={`${item.label}-${index}`} style={styles.row}>
+        <View
+          key={`${item.label}-${index}`}
+          style={[styles.row, compact && styles.rowCompact]}
+        >
           <View style={[styles.dot, { backgroundColor: item.color }]} />
-          <Text style={styles.label}>{item.label}</Text>
-          {item.value ? <Text style={styles.value}>{item.value}</Text> : null}
+          <Text
+            style={[styles.label, compact && styles.labelCompact]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.label}
+          </Text>
+          {item.value ? (
+            <Text
+              style={[styles.value, compact && styles.valueCompact]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {item.value}
+            </Text>
+          ) : null}
         </View>
       ))}
     </View>
@@ -37,6 +55,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm,
   },
+  rowCompact: {
+    gap: spacing.xs,
+  },
   dot: {
     width: 10,
     height: 10,
@@ -44,13 +65,22 @@ const styles = StyleSheet.create({
   },
   label: {
     flex: 1,
+    minWidth: 0,
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.sm,
     color: colors.ink,
   },
+  labelCompact: {
+    fontSize: typography.size.xs,
+    color: colors.slate,
+  },
   value: {
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.size.sm,
+    color: colors.ink,
+  },
+  valueCompact: {
+    fontSize: typography.size.xs,
     color: colors.ink,
   },
 });

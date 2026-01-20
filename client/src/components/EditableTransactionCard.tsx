@@ -70,7 +70,7 @@ export function EditableTransactionCard({
       </View>
 
       {item.isDeleted ? (
-        <Text style={styles.deletedText}>Removed from this entry.</Text>
+        <Text style={styles.deletedText}>Removed from this draft.</Text>
       ) : (
         <>
           <View style={styles.fieldRow}>

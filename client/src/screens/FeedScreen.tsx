@@ -159,7 +159,7 @@ export function FeedScreen() {
           <View style={styles.headerWrapper}>
             <AppHeader
               title="Feed"
-              subtitle="Latest transactions across categories."
+              subtitle="Your transactions, updated in real time."
               showAccount
             />
             <View
@@ -223,7 +223,7 @@ export function FeedScreen() {
               <View style={styles.stateCard}>
                 <Text style={styles.stateTitle}>Loading feed...</Text>
                 <Text style={styles.stateSubtitle}>
-                  Fetching your latest entries.
+                  Fetching your latest transactions.
                 </Text>
               </View>
             ) : null}
@@ -243,7 +243,7 @@ export function FeedScreen() {
               <View style={styles.stateCard}>
                 <Text style={styles.stateTitle}>No transactions yet</Text>
                 <Text style={styles.stateSubtitle}>
-                  Capture your first expense to see it here.
+                  Add your first transaction to see it here.
                 </Text>
               </View>
             ) : null}

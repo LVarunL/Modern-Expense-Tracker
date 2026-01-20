@@ -3,6 +3,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMemo, useState } from "react";
 import {
   Animated,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,9 +12,10 @@ import {
   useWindowDimensions,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import { ChoiceChips } from "../components/ChoiceChips";
 import { GhostButton } from "../components/GhostButton";
-import { MultiSelectChips } from "../components/MultiSelectChips";
+import { MultiSelectSheet } from "../components/MultiSelectSheet";
 import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
@@ -50,6 +52,8 @@ export function FilterModalScreen() {
 
   const [draft, setDraft] = useState(filters);
   const [error, setError] = useState<string | null>(null);
+  const [typeSheetOpen, setTypeSheetOpen] = useState(false);
+  const [categorySheetOpen, setCategorySheetOpen] = useState(false);
 
   const directionChoice = useMemo<DirectionChoice>(() => {
     if (!draft.direction) {
@@ -76,6 +80,24 @@ export function FilterModalScreen() {
       })),
     []
   );
+  const typeSummary = useMemo(() => {
+    if (!draft.types.length) {
+      return "Any";
+    }
+    if (draft.types.length === 1) {
+      return TRANSACTION_TYPE_LABELS[draft.types[0]] ?? draft.types[0];
+    }
+    return `${draft.types.length} selected`;
+  }, [draft.types]);
+  const categorySummary = useMemo(() => {
+    if (!draft.categories.length) {
+      return "Any";
+    }
+    if (draft.categories.length === 1) {
+      return draft.categories[0];
+    }
+    return `${draft.categories.length} selected`;
+  }, [draft.categories]);
 
   const validateAmounts = () => {
     const min = draft.minAmount.trim();
@@ -168,21 +190,33 @@ export function FilterModalScreen() {
           compact={isCompact}
         />
 
-        <MultiSelectChips
-          label="Type"
-          items={typeOptions}
-          selectedIds={draft.types}
-          onChange={(types) => setDraft((prev) => ({ ...prev, types }))}
-        />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Type</Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.selectorRow,
+              pressed && styles.selectorRowPressed,
+            ]}
+            onPress={() => setTypeSheetOpen(true)}
+          >
+            <Text style={styles.selectorValue}>{typeSummary}</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.steel} />
+          </Pressable>
+        </View>
 
-        <MultiSelectChips
-          label="Category"
-          items={categoryOptions}
-          selectedIds={draft.categories}
-          onChange={(categories) =>
-            setDraft((prev) => ({ ...prev, categories }))
-          }
-        />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Category</Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.selectorRow,
+              pressed && styles.selectorRowPressed,
+            ]}
+            onPress={() => setCategorySheetOpen(true)}
+          >
+            <Text style={styles.selectorValue}>{categorySummary}</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.steel} />
+          </Pressable>
+        </View>
 
         <View style={[styles.amountRow, isCompact && styles.amountRowStacked]}>
           <View style={styles.amountField}>
@@ -237,6 +271,22 @@ export function FilterModalScreen() {
           <GhostButton label="Close" onPress={() => navigation.goBack()} />
         </View>
       </ScrollView>
+      <MultiSelectSheet
+        visible={typeSheetOpen}
+        title="Types"
+        items={typeOptions}
+        selectedIds={draft.types}
+        onChange={(types) => setDraft((prev) => ({ ...prev, types }))}
+        onClose={() => setTypeSheetOpen(false)}
+      />
+      <MultiSelectSheet
+        visible={categorySheetOpen}
+        title="Categories"
+        items={categoryOptions}
+        selectedIds={draft.categories}
+        onChange={(categories) => setDraft((prev) => ({ ...prev, categories }))}
+        onClose={() => setCategorySheetOpen(false)}
+      />
     </Screen>
   );
 }
@@ -292,5 +342,32 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.size.sm,
     color: colors.danger,
+  },
+  section: {
+    gap: spacing.sm,
+  },
+  sectionTitle: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.size.sm,
+    color: colors.slate,
+  },
+  selectorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface,
+  },
+  selectorRowPressed: {
+    borderColor: colors.cobalt,
+  },
+  selectorValue: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.size.sm,
+    color: colors.ink,
   },
 });

@@ -27,6 +27,7 @@ export function PrimaryButton({
       style={({ pressed }) => [
         styles.button,
         toneStyle,
+        suffix && styles.buttonWithSuffix,
         pressed && !disabled && styles.pressed,
         disabled && styles.disabled,
       ]}
@@ -49,12 +50,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     shadowColor: colors.ink,
     shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
+  },
+  buttonWithSuffix: {
+    paddingRight: 70,
   },
   buttonDanger: {
     backgroundColor: colors.danger,
@@ -70,12 +74,15 @@ const styles = StyleSheet.create({
     color: colors.surface,
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.size.lg,
+    textAlign: "center",
   },
   suffix: {
     backgroundColor: colors.citrus,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
+    position: "absolute",
+    right: 16,
   },
   suffixText: {
     color: colors.ink,

@@ -151,7 +151,7 @@ export function PreviewScreen() {
           }}
         >
           <PageHeader
-            title="Preview & Confirm"
+            title="Review & Save"
             subtitle={preview.entry_summary ?? rawText}
             meta={occurredAtLabel}
           />
@@ -204,7 +204,7 @@ export function PreviewScreen() {
 
         <View style={styles.actions}>
           <PrimaryButton
-            label={isConfirming ? "Saving..." : "Confirm & Save"}
+            label={isConfirming ? "Saving..." : "Save transactions"}
             onPress={handleConfirm}
             disabled={!canConfirm}
           />

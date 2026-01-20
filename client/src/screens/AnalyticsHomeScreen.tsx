@@ -76,6 +76,7 @@ export function AnalyticsHomeScreen() {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { width } = useWindowDimensions();
   const isCompact = width < 360;
+  const isNarrow = width < 390;
   const [layout, setLayout] = useState<AnalyticsLayout>({
     order: DEFAULT_ANALYTICS_ORDER,
     hidden: [],
@@ -219,7 +220,7 @@ export function AnalyticsHomeScreen() {
               navigation.navigate("AnalyticsCategories", { range })
             }
           >
-            <View style={styles.donutRow}>
+            <View style={[styles.donutRow, isNarrow && styles.donutRowStacked]}>
               <DonutChart
                 data={donutSegments}
                 centerValue={formatCurrencyValue(donutTotal)}
@@ -240,8 +241,8 @@ export function AnalyticsHomeScreen() {
                   });
                 }}
               />
-              <View style={styles.legend}>
-                <ChartLegend items={donutLegend} />
+              <View style={[styles.legend, isNarrow && styles.legendStacked]}>
+                <ChartLegend items={donutLegend} compact={isNarrow} />
               </View>
             </View>
           </ChartCard>
@@ -536,8 +537,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.lg,
   },
+  donutRowStacked: {
+    flexDirection: "column",
+    alignItems: "center",
+  },
   legend: {
     flex: 1,
+  },
+  legendStacked: {
+    width: "100%",
   },
   section: {
     backgroundColor: colors.surface,

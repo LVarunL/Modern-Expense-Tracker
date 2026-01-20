@@ -1,8 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import Voice from "@react-native-voice/voice";
-import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RouteProp } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -59,38 +63,6 @@ export function CaptureScreen() {
     () => (lastPreview ? lastPreview.transactions.slice(0, 2) : []),
     [lastPreview]
   );
-
-  const handlePreview = async () => {
-    const trimmed = text.trim();
-    if (!trimmed || isParsing) {
-      return;
-    }
-
-    setIsParsing(true);
-    setParseError(null);
-
-    try {
-      const preview = await parseEntry({ raw_text: trimmed });
-      if (preview.status === "confirmed") {
-        await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        await queryClient.invalidateQueries({ queryKey: ["summary"] });
-        setLastPreview(preview);
-        setText("");
-        toast.success("Logged", "Transactions saved.");
-        return;
-      }
-      navigation.navigate("PreviewModal", {
-        preview,
-        rawText: trimmed,
-      });
-    } catch (error) {
-      const message = getErrorMessage(error);
-      setParseError(message);
-      toast.error("Could not parse", message);
-    } finally {
-      setIsParsing(false);
-    }
-  };
 
   useEffect(() => {
     Voice.onSpeechStart = () => {
@@ -174,6 +146,39 @@ export function CaptureScreen() {
     }
   };
 
+  const handlePreview = async () => {
+    const trimmed = text.trim();
+    if (!trimmed || isParsing) {
+      return;
+    }
+
+    setIsParsing(true);
+    setParseError(null);
+
+    try {
+      const preview = await parseEntry({ raw_text: trimmed });
+      if (preview.status === "confirmed") {
+        await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        await queryClient.invalidateQueries({ queryKey: ["summary"] });
+        setLastPreview(preview);
+        handleClear();
+        toast.success("Logged", "Transactions saved.");
+        return;
+      }
+      handleClear();
+      navigation.navigate("PreviewModal", {
+        preview,
+        rawText: trimmed,
+      });
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setParseError(message);
+      toast.error("Could not parse", message);
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       if (!route.params?.autoVoice) {
@@ -191,8 +196,8 @@ export function CaptureScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AppHeader
-          title="Capture"
-          subtitle="Describe your spend in one line. We will parse and preview it."
+          title="Add transaction"
+          subtitle="We'll extract amounts, categories, and transactions."
           showAccount
         />
 
@@ -274,7 +279,7 @@ export function CaptureScreen() {
 
         <View style={styles.previewActions}>
           <PrimaryButton
-            label={isParsing ? "Parsing..." : "Preview entries"}
+            label={isParsing ? "Preparing breakdown..." : "Review transactions"}
             onPress={handlePreview}
             disabled={!text.trim() || isParsing}
           />
@@ -300,11 +305,11 @@ export function CaptureScreen() {
               <Text style={styles.previewTitle}>
                 {lastPreview?.status === "confirmed"
                   ? "Logged"
-                  : "Recent preview"}
+                  : "Recent draft"}
               </Text>
               <Text style={styles.previewSubtitle}>
                 {lastPreview?.entry_summary
-                  ? `Parsed: ${lastPreview.entry_summary}`
+                  ? `Summary: ${lastPreview.entry_summary}`
                   : null}
               </Text>
             </>

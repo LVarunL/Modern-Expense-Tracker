@@ -29,7 +29,6 @@ export function AppHeader({
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useAuth();
-  const initial = user?.email?.trim()?.[0]?.toUpperCase() ?? "";
   const canGoBack = navigation.canGoBack();
   const showBackButton = showBack && canGoBack;
 
@@ -62,11 +61,7 @@ export function AppHeader({
               pressed && styles.accountButtonPressed,
             ]}
           >
-            {initial ? (
-              <Text style={styles.accountInitial}>{initial}</Text>
-            ) : (
-              <Ionicons name="person" size={18} color={colors.ink} />
-            )}
+            <Ionicons name="settings" size={18} color={colors.ink} />
           </Pressable>
         ) : null}
       </View>
@@ -131,10 +126,5 @@ const styles = StyleSheet.create({
   accountButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.96 }],
-  },
-  accountInitial: {
-    fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.size.sm,
-    color: colors.ink,
   },
 });

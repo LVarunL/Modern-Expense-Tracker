@@ -63,7 +63,7 @@ export function TimeRangeFilter({ value, onChange, compact }: Props) {
         label="Time"
         items={presets}
         selectedId={value.preset}
-        scrollable={false}
+        scrollable
         onSelect={(preset) =>
           onChange({
             ...value,
