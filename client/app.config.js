@@ -26,5 +26,9 @@ module.exports = {
   expo: {
     ...config.expo,
     scheme: schemes.length > 1 ? schemes : schemes[0],
+    plugins: [
+      ...(config.expo?.plugins ?? []),
+      "@react-native-community/datetimepicker",
+    ],
   },
 };

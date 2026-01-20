@@ -2,6 +2,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useEffect } from "react";
 
 import { AccountSettingsScreen } from "../screens/AccountSettingsScreen";
+import { AnalyticsCashflowScreen } from "../screens/AnalyticsCashflowScreen";
+import { AnalyticsCategoriesScreen } from "../screens/AnalyticsCategoriesScreen";
+import { AnalyticsCategoryDetailScreen } from "../screens/AnalyticsCategoryDetailScreen";
+import { AnalyticsTypesScreen } from "../screens/AnalyticsTypesScreen";
 import { AuthScreen } from "../screens/AuthScreen";
 import { EditTransactionScreen } from "../screens/EditTransactionScreen";
 import { FilterModalScreen } from "../screens/FilterModalScreen";
@@ -65,6 +69,22 @@ export function RootNavigator() {
             name="FilterModal"
             component={FilterModalScreen}
             options={{ presentation: "modal", animation: "slide_from_bottom" }}
+          />
+          <Stack.Screen
+            name="AnalyticsCategories"
+            component={AnalyticsCategoriesScreen}
+          />
+          <Stack.Screen
+            name="AnalyticsCategoryDetail"
+            component={AnalyticsCategoryDetailScreen}
+          />
+          <Stack.Screen
+            name="AnalyticsTypes"
+            component={AnalyticsTypesScreen}
+          />
+          <Stack.Screen
+            name="AnalyticsCashflow"
+            component={AnalyticsCashflowScreen}
           />
           <Stack.Screen
             name="AccountSettings"

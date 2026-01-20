@@ -33,6 +33,8 @@ export function confirmEntry(
 export function fetchTransactions(params?: {
   from?: string;
   to?: string;
+  from_ms?: number;
+  to_ms?: number;
   limit?: number;
   offset?: number;
   sort_by?: TransactionSortField;
@@ -49,6 +51,12 @@ export function fetchTransactions(params?: {
   }
   if (params?.to) {
     query.set("to", params.to);
+  }
+  if (typeof params?.from_ms === "number") {
+    query.set("from_ms", String(params.from_ms));
+  }
+  if (typeof params?.to_ms === "number") {
+    query.set("to_ms", String(params.to_ms));
   }
   if (params?.limit) {
     query.set("limit", String(params.limit));

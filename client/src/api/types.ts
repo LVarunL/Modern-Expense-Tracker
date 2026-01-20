@@ -32,20 +32,20 @@ export interface ParseTransaction {
 
 export interface ParseRequest {
   raw_text: string;
-  reference_datetime?: string | null;
+  reference_datetime?: number | null;
 }
 
 export interface ParseResponse {
   entry_id: number;
   status: "parsed" | "pending_confirmation" | "confirmed" | "rejected";
   entry_summary?: string | null;
-  occurred_time?: string | null;
+  occurred_time?: number | null;
   transactions: ParseTransaction[];
   assumptions: string[];
 }
 
 export interface ConfirmTransactionInput {
-  occurred_time: string;
+  occurred_time: number;
   amount: number;
   currency: string;
   direction: TransactionDirection;
@@ -62,9 +62,9 @@ export interface ConfirmRequest {
 export interface TransactionOut {
   id: number;
   entry_id: number;
-  occurred_time: string;
-  created_time: string;
-  modified_time: string;
+  occurred_time: number;
+  created_time: number;
+  modified_time: number;
   amount: number;
   currency: string;
   direction: TransactionDirection;
@@ -85,8 +85,8 @@ export interface EntryOut {
   id: number;
   raw_text: string;
   source: string;
-  created_time: string;
-  modified_time: string;
+  created_time: number;
+  modified_time: number;
   parser_output_json?: Record<string, unknown> | null;
   parser_version?: string | null;
   notes?: string | null;
@@ -116,6 +116,48 @@ export interface SummaryResponse {
   total_outflow: number;
   net: number;
   by_category: CategorySummary[];
+  transaction_count: number;
+}
+
+export type AnalyticsBucket = "day" | "week" | "month";
+
+export interface AnalyticsSeriesPoint {
+  bucket_start: number;
+  total: number;
+  transaction_count: number;
+}
+
+export interface AnalyticsSeriesResponse {
+  bucket: AnalyticsBucket;
+  items: AnalyticsSeriesPoint[];
+}
+
+export interface AnalyticsCategoryPoint {
+  direction: TransactionDirection;
+  category: string;
+  total: number;
+  transaction_count: number;
+}
+
+export interface AnalyticsCategoryResponse {
+  items: AnalyticsCategoryPoint[];
+}
+
+export interface AnalyticsTypePoint {
+  direction: TransactionDirection;
+  type: TransactionType;
+  total: number;
+  transaction_count: number;
+}
+
+export interface AnalyticsTypeResponse {
+  items: AnalyticsTypePoint[];
+}
+
+export interface AnalyticsSummaryResponse {
+  total_inflow: number;
+  total_outflow: number;
+  net: number;
   transaction_count: number;
 }
 

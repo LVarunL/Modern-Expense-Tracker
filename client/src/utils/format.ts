@@ -1,4 +1,5 @@
 import type { TransactionDirection } from "../api/types";
+import { normalizeEpochMs } from "./time";
 
 export function formatCurrency(
   amount: number,
@@ -22,14 +23,45 @@ export function formatCurrencyValue(
   return `${currencySymbol}${formatted}`;
 }
 
-export function formatDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
+export function formatDateTime(
+  value: number | string | null | undefined
+): string {
+  const epochMs = normalizeEpochMs(value);
+  if (epochMs === null) {
+    return "";
   }
+  const date = new Date(epochMs);
   return date.toLocaleString("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
+  });
+}
+
+export function formatShortDate(
+  value: number | string | null | undefined
+): string {
+  const epochMs = normalizeEpochMs(value);
+  if (epochMs === null) {
+    return "";
+  }
+  const date = new Date(epochMs);
+  return date.toLocaleDateString("en-IN", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatMonthYear(
+  value: number | string | null | undefined
+): string {
+  const epochMs = normalizeEpochMs(value);
+  if (epochMs === null) {
+    return "";
+  }
+  const date = new Date(epochMs);
+  return date.toLocaleDateString("en-IN", {
+    month: "short",
+    year: "numeric",
   });
 }
 

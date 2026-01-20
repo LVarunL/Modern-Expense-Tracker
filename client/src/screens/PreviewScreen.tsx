@@ -28,7 +28,8 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 import { useEntranceAnimation } from "../utils/animations";
-import { parseAmount } from "../utils/format";
+import { formatDateTime, parseAmount } from "../utils/format";
+import { normalizeEpochMs } from "../utils/time";
 
 export function PreviewScreen() {
   const navigation =
@@ -57,10 +58,7 @@ export function PreviewScreen() {
   const [isConfirming, setIsConfirming] = useState(false);
 
   const occurredAtLabel = preview.occurred_time
-    ? new Date(preview.occurred_time).toLocaleString("en-IN", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+    ? formatDateTime(preview.occurred_time)
     : "No date captured";
 
   const amountErrors = draftTransactions.map((item) => {
@@ -113,7 +111,7 @@ export function PreviewScreen() {
     setConfirmError(null);
 
     try {
-      const occurredAt = preview.occurred_time ?? new Date().toISOString();
+      const occurredAt = normalizeEpochMs(preview.occurred_time) ?? Date.now();
       const payload: ConfirmRequest = {
         entry_id: preview.entry_id,
         transactions: activeTransactions.map((item) => ({

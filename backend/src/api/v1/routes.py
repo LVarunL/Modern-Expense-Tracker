@@ -33,6 +33,7 @@ from src.services import (
     update_transaction,
 )
 from src.api.v1.auth import router as auth_router
+from src.api.v1.analytics import router as analytics_router
 from src.api.v1.examples import (
     CONFIRM_REQUEST_EXAMPLES,
     CONFIRM_RESPONSE_EXAMPLES,
@@ -64,12 +65,13 @@ from src.api.v1.schemas import (
     TransactionOut,
     TransactionUpdateRequest,
     TransactionsResponse,
-    date_range,
+    epoch_range,
     month_range,
 )
 
 router = APIRouter()
 router.include_router(auth_router)
+router.include_router(analytics_router)
 
 transaction_sort_dependency = build_sort_dependency(
     sort_enum=TransactionField,
@@ -305,13 +307,23 @@ async def update_transaction_route(
 async def list_transactions(
     from_date: date | None = Query(default=None, alias="from"),
     to_date: date | None = Query(default=None, alias="to"),
+    from_ms: int | None = Query(
+        default=None,
+        alias="from_ms",
+        description="Epoch milliseconds start time (inclusive).",
+    ),
+    to_ms: int | None = Query(
+        default=None,
+        alias="to_ms",
+        description="Epoch milliseconds end time (exclusive).",
+    ),
     pagination: PaginationParams = Depends(get_pagination),
     sort: SortParams[TransactionField] = Depends(transaction_sort_dependency),
     filters: list[FilterClause[TransactionField]] = Depends(get_transaction_filters),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> TransactionsResponse:
-    start, end = date_range(from_date, to_date)
+    start, end = epoch_range(from_ms, to_ms, from_date, to_date)
     items, total_count = await list_transactions_paginated(
         session,
         from_date=start,

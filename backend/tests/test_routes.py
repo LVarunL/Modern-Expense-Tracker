@@ -109,7 +109,7 @@ async def test_confirm_creates_transactions(client, db_session) -> None:
     parse_response = await client.post("/v1/parse", json={"raw_text": "Lunch 250"})
     entry_id = parse_response.json()["entry_id"]
 
-    occurred_at = "2025-01-10T12:30:00+00:00"
+    occurred_at = 1736512200000
     payload = {
         "entry_id": entry_id,
         "transactions": [
@@ -148,7 +148,7 @@ async def test_confirm_replaces_transactions(client, db_session) -> None:
         "entry_id": entry_id,
         "transactions": [
             {
-                "occurred_time": "2025-01-10T19:30:00+00:00",
+                "occurred_time": 1736537400000,
                 "amount": 500,
                 "currency": "INR",
                 "direction": "outflow",
@@ -163,7 +163,7 @@ async def test_confirm_replaces_transactions(client, db_session) -> None:
         "entry_id": entry_id,
         "transactions": [
             {
-                "occurred_time": "2025-01-10T20:00:00+00:00",
+                "occurred_time": 1736539200000,
                 "amount": 650,
                 "currency": "INR",
                 "direction": "outflow",
@@ -198,7 +198,7 @@ async def test_confirm_missing_entry(client) -> None:
         "entry_id": 9999,
         "transactions": [
             {
-                "occurred_time": "2025-01-10T12:30:00+00:00",
+                "occurred_time": 1736512200000,
                 "amount": 250,
                 "currency": "INR",
                 "direction": "outflow",
@@ -350,6 +350,56 @@ async def test_list_transactions_filters_and_paginates(client, db_session) -> No
     assert data["offset"] == 0
     assert data["items"][0]["amount"] == 300
     assert data["items"][1]["amount"] == 200
+
+
+async def test_list_transactions_filters_by_epoch_range(client, db_session) -> None:
+    entry = await create_entry(
+        db_session,
+        entry=EntryCreate(user_id=TEST_USER_ID, raw_text="Epoch seed"),
+    )
+
+    base_time = datetime(2025, 1, 10, tzinfo=timezone.utc)
+    items = [
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=base_time - timedelta(days=1),
+            amount=Decimal("100"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Food & Drinks",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=base_time,
+            amount=Decimal("200"),
+            currency="INR",
+            direction=TransactionDirection.outflow,
+            type=TransactionType.expense,
+            category="Transport",
+        ),
+        TransactionCreate(
+            entry_id=entry.id,
+            occurred_at=base_time + timedelta(days=1),
+            amount=Decimal("300"),
+            currency="INR",
+            direction=TransactionDirection.inflow,
+            type=TransactionType.income,
+            category="Income",
+        ),
+    ]
+    await create_transactions(db_session, items=items)
+
+    start_ms = int(base_time.timestamp() * 1000)
+    end_ms = int((base_time + timedelta(days=1)).timestamp() * 1000)
+    response = await client.get(
+        "/v1/transactions",
+        params={"from_ms": start_ms, "to_ms": end_ms},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_count"] == 1
+    assert data["items"][0]["amount"] == 200
 
 
 async def test_list_transactions_supports_sorting(client, db_session) -> None:

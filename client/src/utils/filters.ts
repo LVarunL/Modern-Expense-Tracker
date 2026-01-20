@@ -1,5 +1,6 @@
 import type { TransactionDirection, TransactionType } from "../api/types";
 import type { FeedFilters } from "../state/feedFilters";
+import { buildTimeRange, isTimeRangeActive } from "./timeRange";
 
 export type FeedQueryFilters = {
   direction?: TransactionDirection;
@@ -7,6 +8,8 @@ export type FeedQueryFilters = {
   category?: string[];
   min_amount?: number;
   max_amount?: number;
+  from_ms?: number;
+  to_ms?: number;
 };
 
 function normalizeArray<T extends string>(values: T[]): T[] {
@@ -26,6 +29,7 @@ export function buildFeedQueryFilters(filters: FeedFilters): FeedQueryFilters {
   const normalizedCategories = normalizeArray(filters.categories);
   const minAmount = parseAmount(filters.minAmount);
   const maxAmount = parseAmount(filters.maxAmount);
+  const timeRange = buildTimeRange(filters.timeRange);
 
   return {
     direction: filters.direction ?? undefined,
@@ -33,6 +37,8 @@ export function buildFeedQueryFilters(filters: FeedFilters): FeedQueryFilters {
     category: normalizedCategories.length ? normalizedCategories : undefined,
     min_amount: minAmount,
     max_amount: maxAmount,
+    from_ms: timeRange.fromMs,
+    to_ms: timeRange.toMs,
   };
 }
 
@@ -51,6 +57,9 @@ export function countActiveFilters(filters: FeedFilters): number {
     count += 1;
   }
   if (filters.maxAmount.trim()) {
+    count += 1;
+  }
+  if (isTimeRangeActive(filters.timeRange)) {
     count += 1;
   }
   return count;

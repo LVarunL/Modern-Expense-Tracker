@@ -5,14 +5,17 @@ from __future__ import annotations
 import argparse
 import asyncio
 import random
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func, select
 
+from src.config import get_settings
 from src.database.connection import SessionLocal
 from src.models.entry import Entry
 from src.models.enums import EntryStatus, TransactionDirection, TransactionType
 from src.models.transaction import Transaction
+from src.models.user import User
 from src.services import EntryCreate, TransactionCreate, create_entry, create_transactions
 
 
@@ -83,14 +86,48 @@ async def create_seed(
     days: int,
     tag: str,
     seed: int | None,
+    user_id: uuid.UUID | None,
+    user_email: str | None,
 ) -> int:
     rng = random.Random(seed)
     async with SessionLocal() as session:
         async with session.begin():
+            user = None
+            if user_email:
+                user = await session.scalar(
+                    select(User).where(User.email == user_email)
+                )
+                if user:
+                    if user_id and user.id != user_id:
+                        raise ValueError(
+                            "Provided user id does not match the email's user."
+                        )
+                    user_id = user.id
+            if user_id and not user:
+                user = await session.scalar(select(User).where(User.id == user_id))
+                if user and user_email and user.email != user_email:
+                    raise ValueError(
+                        "Provided user email does not match the user id."
+                    )
+            if not user:
+                if not user_email:
+                    raise ValueError(
+                        "User not found. Pass --user-email to create or use an existing user id."
+                    )
+                if not user_id:
+                    user_id = uuid.uuid4()
+                session.add(
+                    User(
+                        id=user_id,
+                        email=user_email,
+                        password_hash=None,
+                    )
+                )
+                await session.flush()
             entry = await create_entry(
                 session,
                 entry=EntryCreate(
-                    user_id="demo-user",
+                    user_id=user_id,
                     raw_text=f"Seeded {count} transactions",
                     status=EntryStatus.confirmed,
                     notes=tag,
@@ -147,6 +184,18 @@ def _build_parser() -> argparse.ArgumentParser:
     create_parser.add_argument("--days", type=int, default=60)
     create_parser.add_argument("--tag", type=str, default="seed:bulk")
     create_parser.add_argument("--seed", type=int, default=None)
+    create_parser.add_argument(
+        "--user-id",
+        type=str,
+        default=None,
+        help="User UUID to attach seeded entries to.",
+    )
+    create_parser.add_argument(
+        "--user-email",
+        type=str,
+        default=None,
+        help="Create the user with this email if the user id does not exist.",
+    )
 
     delete_parser = subparsers.add_parser("delete", help="Delete seeded transactions.")
     delete_parser.add_argument("--tag", type=str, default="seed:bulk")
@@ -157,15 +206,23 @@ def _build_parser() -> argparse.ArgumentParser:
 async def _run() -> None:
     parser = _build_parser()
     args = parser.parse_args()
+    settings = get_settings()
 
     if args.command == "create":
+        user_id = uuid.UUID(args.user_id) if args.user_id else None
+        if not user_id and not args.user_email:
+            user_id = settings.default_user_id
         entry_id = await create_seed(
             count=args.count,
             days=args.days,
             tag=args.tag,
             seed=args.seed,
+            user_id=user_id,
+            user_email=args.user_email,
         )
-        print(f"Created entry {entry_id} with {args.count} transactions.")
+        print(
+            f"Created entry {entry_id} with {args.count} transactions for user {user_id}."
+        )
         return
 
     entry_count, transaction_count = await delete_seed(tag=args.tag)

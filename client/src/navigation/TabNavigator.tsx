@@ -1,8 +1,8 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
+import { AnalyticsHomeScreen } from "../screens/AnalyticsHomeScreen";
 import { CaptureScreen } from "../screens/CaptureScreen";
 import { FeedScreen } from "../screens/FeedScreen";
-import { SummaryScreen } from "../screens/SummaryScreen";
 import { TabBar } from "./TabBar";
 import type { TabParamList } from "./types";
 
@@ -19,7 +19,11 @@ export function TabNavigator() {
     >
       <Tab.Screen name="Feed" component={FeedScreen} />
       <Tab.Screen name="Capture" component={CaptureScreen} />
-      <Tab.Screen name="Summary" component={SummaryScreen} />
+      <Tab.Screen
+        name="Summary"
+        component={AnalyticsHomeScreen}
+        options={{ tabBarLabel: "Analytics" }}
+      />
     </Tab.Navigator>
   );
 }

@@ -115,7 +115,7 @@ def _transaction_filters(
     if from_date:
         filters.append(Transaction.occurred_at >= from_date)
     if to_date:
-        filters.append(Transaction.occurred_at <= to_date)
+        filters.append(Transaction.occurred_at < to_date)
     return filters
 
 

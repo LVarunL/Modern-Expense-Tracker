@@ -67,6 +67,31 @@ Brevo settings (when `EMAIL_PROVIDER=brevo`):
 - `BREVO_BASE_URL` (default: `https://api.brevo.com/v3`)
 - `BREVO_TIMEOUT_SECONDS` (default: `10`)
 
+## Analytics and time ranges
+
+Analytics endpoints:
+
+- `GET /v1/analytics/summary`
+- `GET /v1/analytics/series`
+- `GET /v1/analytics/categories`
+- `GET /v1/analytics/types`
+
+All analytics endpoints accept:
+
+- `from_ms` (epoch milliseconds, inclusive)
+- `to_ms` (epoch milliseconds, exclusive)
+
+Series-specific parameters:
+
+- `bucket` (`day`, `week`, `month`, default: `day`)
+- `tz` (IANA timezone, default: `UTC`)
+
+Timezone notes:
+
+- Filters are applied to absolute instants (`occurred_at >= from_ms` and `< to_ms`).
+- Buckets are computed in the provided timezone, then returned as epoch milliseconds
+  for the bucket start in UTC.
+
 ## Parser expectations
 
 To improve parse quality, keep prompts explicit and consistent:

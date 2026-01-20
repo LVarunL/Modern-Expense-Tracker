@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import type { TransactionDirection, TransactionType } from "../api/types";
+import type { TimeRangeFilter } from "../utils/timeRange";
 
 export type FeedFilters = {
   direction: TransactionDirection | null;
@@ -16,6 +17,7 @@ export type FeedFilters = {
   categories: string[];
   minAmount: string;
   maxAmount: string;
+  timeRange: TimeRangeFilter;
 };
 
 type FeedFiltersContextValue = {
@@ -33,6 +35,11 @@ const defaultFilters: FeedFilters = {
   categories: [],
   minAmount: "",
   maxAmount: "",
+  timeRange: {
+    preset: "all",
+    customStart: "",
+    customEnd: "",
+  },
 };
 
 const FeedFiltersContext = createContext<FeedFiltersContextValue | null>(null);
@@ -48,7 +55,14 @@ export function FeedFiltersProvider({ children }: PropsWithChildren) {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (stored && isMounted) {
           const parsed = JSON.parse(stored) as Partial<FeedFilters>;
-          setFiltersState({ ...defaultFilters, ...parsed });
+          setFiltersState({
+            ...defaultFilters,
+            ...parsed,
+            timeRange: {
+              ...defaultFilters.timeRange,
+              ...(parsed.timeRange ?? {}),
+            },
+          });
         }
       } catch {
         setFiltersState(defaultFilters);

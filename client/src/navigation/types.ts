@@ -1,6 +1,11 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
 
-import type { ParseResponse, TransactionOut } from "../api/types";
+import type {
+  ParseResponse,
+  TransactionDirection,
+  TransactionOut,
+} from "../api/types";
+import type { TimeRangeFilter } from "../utils/timeRange";
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -16,6 +21,14 @@ export type RootStackParamList = {
     transaction: TransactionOut;
   };
   FilterModal: undefined;
+  AnalyticsCategories: { range?: TimeRangeFilter } | undefined;
+  AnalyticsCategoryDetail: {
+    range?: TimeRangeFilter;
+    category: string;
+    direction: TransactionDirection;
+  };
+  AnalyticsTypes: { range?: TimeRangeFilter } | undefined;
+  AnalyticsCashflow: { range?: TimeRangeFilter } | undefined;
 };
 
 export type TabParamList = {

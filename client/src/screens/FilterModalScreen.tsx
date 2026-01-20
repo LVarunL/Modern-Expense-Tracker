@@ -17,6 +17,7 @@ import { MultiSelectChips } from "../components/MultiSelectChips";
 import { PageHeader } from "../components/PageHeader";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Screen } from "../components/Screen";
+import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import {
   TRANSACTION_CATEGORIES,
   TRANSACTION_TYPES,
@@ -29,6 +30,7 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 import { useEntranceAnimation } from "../utils/animations";
 import { sanitizeAmountInput } from "../utils/format";
+import { validateTimeRange } from "../utils/timeRange";
 
 type DirectionChoice = "all" | "inflow" | "outflow";
 
@@ -99,6 +101,11 @@ export function FilterModalScreen() {
       setError(validationError);
       return;
     }
+    const timeError = validateTimeRange(draft.timeRange);
+    if (timeError) {
+      setError(timeError);
+      return;
+    }
     setError(null);
     setFilters(draft);
     navigation.goBack();
@@ -112,6 +119,11 @@ export function FilterModalScreen() {
       categories: [],
       minAmount: "",
       maxAmount: "",
+      timeRange: {
+        preset: "all",
+        customStart: "",
+        customEnd: "",
+      },
     });
   };
 
@@ -143,6 +155,17 @@ export function FilterModalScreen() {
               direction: value === "all" ? null : value,
             }))
           }
+        />
+
+        <TimeRangeFilter
+          value={draft.timeRange}
+          onChange={(timeRange) =>
+            setDraft((prev) => ({
+              ...prev,
+              timeRange,
+            }))
+          }
+          compact={isCompact}
         />
 
         <MultiSelectChips
