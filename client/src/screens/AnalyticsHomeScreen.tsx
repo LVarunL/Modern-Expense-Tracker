@@ -18,7 +18,6 @@ import DraggableFlatList, {
 import { getErrorMessage } from "../api";
 import { AppHeader } from "../components/AppHeader";
 import { Screen } from "../components/Screen";
-import { StatPill } from "../components/StatPill";
 import { TimeRangeFilter } from "../components/TimeRangeFilter";
 import {
   BarChart,
@@ -364,52 +363,50 @@ export function AnalyticsHomeScreen() {
       >
         <AppHeader title="Analytics" subtitle={label} showAccount />
 
-        <TimeRangeFilter
-          value={range}
-          onChange={setRange}
-          compact={isCompact}
-        />
+        <View style={styles.topStack}>
+          <TimeRangeFilter
+            value={range}
+            onChange={setRange}
+            compact={isCompact}
+          />
 
-        <View style={styles.layoutCard}>
-          <View style={styles.layoutHeader}>
-            <Text style={styles.layoutTitle}>Layout</Text>
-            <Pressable
-              onPress={() => setIsEditingLayout((prev) => !prev)}
-              style={({ pressed }) => [
-                styles.layoutAction,
-                pressed && styles.layoutActionPressed,
-              ]}
-            >
-              <Text style={styles.layoutActionText}>
-                {isEditingLayout ? "Done" : "Edit"}
-              </Text>
-            </Pressable>
-          </View>
-          {isEditingLayout ? (
-            <View style={styles.layoutList}>
-              <DraggableFlatList
-                data={layout.order}
-                keyExtractor={(item) => item}
-                onDragEnd={({ data }) =>
-                  setLayout((prev) => ({ ...prev, order: data }))
-                }
-                renderItem={renderLayoutRow}
-                scrollEnabled={false}
-              />
-              <Text style={styles.layoutHint}>
-                Drag the handle to reorder. Tap the eye to hide or restore a
-                card.
-              </Text>
+          <View style={styles.layoutCard}>
+            <View style={styles.layoutHeader}>
+              <Text style={styles.layoutTitle}>Layout</Text>
+              <Pressable
+                onPress={() => setIsEditingLayout((prev) => !prev)}
+                style={({ pressed }) => [
+                  styles.layoutAction,
+                  pressed && styles.layoutActionPressed,
+                ]}
+              >
+                <Text style={styles.layoutActionText}>
+                  {isEditingLayout ? "Done" : "Edit"}
+                </Text>
+              </Pressable>
             </View>
-          ) : layout.hidden.length ? (
-            <Text style={styles.layoutHint}>
-              Hidden: {layout.hidden.map((id) => CARD_LABELS[id]).join(", ")}
-            </Text>
-          ) : (
-            <Text style={styles.layoutHint}>
-              Reorder or hide cards to personalize analytics.
-            </Text>
-          )}
+            {isEditingLayout ? (
+              <View style={styles.layoutList}>
+                <DraggableFlatList
+                  data={layout.order}
+                  keyExtractor={(item) => item}
+                  onDragEnd={({ data }) =>
+                    setLayout((prev) => ({ ...prev, order: data }))
+                  }
+                  renderItem={renderLayoutRow}
+                  scrollEnabled={false}
+                />
+                <Text style={styles.layoutHint}>
+                  Drag the handle to reorder. Tap the eye to hide or restore a
+                  card.
+                </Text>
+              </View>
+            ) : layout.hidden.length ? (
+              <Text style={styles.layoutHint}>
+                Hidden: {layout.hidden.map((id) => CARD_LABELS[id]).join(", ")}
+              </Text>
+            ) : null}
+          </View>
         </View>
 
         {!resolved ? (
@@ -437,23 +434,35 @@ export function AnalyticsHomeScreen() {
 
         {hasRange ? (
           <>
-            <View
-              style={[styles.statsRow, isCompact && styles.statsRowStacked]}
-            >
-              <StatPill
-                label="Inflow"
-                value={formatCurrencyValue(summary?.total_inflow ?? 0)}
-              />
-              <StatPill
-                label="Outflow"
-                value={formatCurrencyValue(summary?.total_outflow ?? 0)}
-              />
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Inflow</Text>
+                <Text style={[styles.summaryValue, styles.summaryValueInflow]}>
+                  {formatCurrencyValue(summary?.total_inflow ?? 0)}
+                </Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Outflow</Text>
+                <Text style={[styles.summaryValue, styles.summaryValueOutflow]}>
+                  {formatCurrencyValue(summary?.total_outflow ?? 0)}
+                </Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Net</Text>
+                <Text
+                  style={[
+                    styles.summaryValue,
+                    netDirection === "inflow"
+                      ? styles.summaryValueInflow
+                      : styles.summaryValueOutflow,
+                  ]}
+                >
+                  {formatCurrency(Math.abs(netValue), netDirection)}
+                </Text>
+              </View>
             </View>
-            <StatPill
-              label="Net"
-              value={formatCurrency(Math.abs(netValue), netDirection)}
-              tone="accent"
-            />
 
             {visibleCards.map((id) => renderCard(id))}
 
@@ -519,12 +528,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
     gap: spacing.xl,
   },
-  statsRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  statsRowStacked: {
-    flexDirection: "column",
+  topStack: {
+    gap: spacing.md,
   },
   donutRow: {
     flexDirection: "row",
@@ -542,10 +547,46 @@ const styles = StyleSheet.create({
     borderColor: colors.divider,
     gap: spacing.sm,
   },
+  summaryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  summaryItem: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  summaryLabel: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.size.xs,
+    color: colors.steel,
+  },
+  summaryValue: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.size.md,
+    color: colors.ink,
+  },
+  summaryValueInflow: {
+    color: colors.success,
+  },
+  summaryValueOutflow: {
+    color: colors.cobalt,
+  },
+  summaryDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: colors.divider,
+  },
   layoutCard: {
     backgroundColor: colors.surface,
     borderRadius: 18,
-    padding: spacing.lg,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.divider,
     gap: spacing.sm,
