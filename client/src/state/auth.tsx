@@ -14,9 +14,11 @@ import {
   loginWithGoogle,
   logout as logoutRequest,
   register,
+  updateMe,
 } from "../api/authApi";
 import type { AuthUser } from "../api/types";
 import { queryClient } from "../queryClient";
+import { getDeviceTimeZone } from "../utils/timezone";
 import {
   clearAuthSnapshot,
   loadAuthSnapshot,
@@ -81,17 +83,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const updateUser = useCallback((updates: Partial<AuthUser>) => {
+    setSnapshot((prev) => {
+      if (!prev.user) {
+        return prev;
+      }
+      const next = {
+        ...prev,
+        user: {
+          ...prev.user,
+          ...updates,
+        },
+      };
+      void saveAuthSnapshot(next);
+      return next;
+    });
+  }, []);
+
   const applyAuthResponse = useCallback(async (response: AuthSnapshot) => {
     setSnapshot(response);
   }, []);
+
+  const syncDeviceTimeZone = useCallback(
+    async (current: AuthUser | null) => {
+      if (!current) {
+        return;
+      }
+      const deviceTimeZone = getDeviceTimeZone();
+      if (current.timezone === deviceTimeZone) {
+        return;
+      }
+      try {
+        const updated = await updateMe({ timezone: deviceTimeZone });
+        updateUser(updated);
+      } catch {
+        // Ignore sync failures; we'll retry next launch.
+      }
+    },
+    [updateUser]
+  );
 
   const loginWithPassword = useCallback(
     async (email: string, password: string) => {
       const response = await login({ email, password });
       const next = await setAuthFromResponse(response);
       await applyAuthResponse(next);
+      await syncDeviceTimeZone(next.user);
     },
-    [applyAuthResponse]
+    [applyAuthResponse, syncDeviceTimeZone]
   );
 
   const registerWithPassword = useCallback(
@@ -99,8 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await register({ email, password });
       const next = await setAuthFromResponse(response);
       await applyAuthResponse(next);
+      await syncDeviceTimeZone(next.user);
     },
-    [applyAuthResponse]
+    [applyAuthResponse, syncDeviceTimeZone]
   );
 
   const loginWithGoogleToken = useCallback(
@@ -108,8 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await loginWithGoogle({ id_token: idToken });
       const next = await setAuthFromResponse(response);
       await applyAuthResponse(next);
+      await syncDeviceTimeZone(next.user);
     },
-    [applyAuthResponse]
+    [applyAuthResponse, syncDeviceTimeZone]
   );
 
   const logout = useCallback(async () => {
@@ -143,22 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const updateUser = useCallback((updates: Partial<AuthUser>) => {
-    setSnapshot((prev) => {
-      if (!prev.user) {
-        return prev;
-      }
-      const next = {
-        ...prev,
-        user: {
-          ...prev.user,
-          ...updates,
-        },
-      };
-      void saveAuthSnapshot(next);
-      return next;
-    });
-  }, []);
+  useEffect(() => {
+    if (!snapshot.accessToken) {
+      return;
+    }
+    void syncDeviceTimeZone(snapshot.user);
+  }, [snapshot.accessToken, snapshot.user, syncDeviceTimeZone]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

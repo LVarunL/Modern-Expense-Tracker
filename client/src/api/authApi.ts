@@ -1,6 +1,7 @@
 import { request } from "./client";
 import type {
   AuthResponse,
+  AuthUser,
   DeleteAccountRequest,
   ForgotPasswordConfirmRequest,
   ForgotPasswordRequest,
@@ -11,6 +12,7 @@ import type {
   RefreshRequest,
   RegisterRequest,
   ResetPasswordConfirmRequest,
+  UpdateMeRequest,
 } from "./types";
 
 export function register(payload: RegisterRequest): Promise<AuthResponse> {
@@ -58,6 +60,13 @@ export function logout(payload: LogoutRequest): Promise<void> {
 export function deleteAccount(payload?: DeleteAccountRequest): Promise<void> {
   return request<void>("/v1/auth/account", {
     method: "DELETE",
+    body: payload,
+  });
+}
+
+export function updateMe(payload: UpdateMeRequest): Promise<AuthUser> {
+  return request<AuthUser>("/v1/auth/me", {
+    method: "PATCH",
     body: payload,
   });
 }

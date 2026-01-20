@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import logging
 
@@ -48,6 +49,7 @@ class UserOut(APIModel):
     id: str
     email: str
     has_password: bool
+    timezone: str
 
 
 class AuthResponse(APIModel):
@@ -87,6 +89,10 @@ class DeleteAccountRequest(APIModel):
     password: str | None = None
 
 
+class UpdateMeRequest(APIModel):
+    timezone: str
+
+
 class ForgotPasswordRequest(APIModel):
     email: str
 
@@ -111,6 +117,7 @@ def user_out(user: User) -> UserOut:
         id=str(user.id),
         email=user.email,
         has_password=bool(user.password_hash),
+        timezone=user.timezone,
     )
 
 
@@ -444,6 +451,26 @@ async def logout(
 
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)) -> UserOut:
+    return user_out(current_user)
+
+
+@router.patch("/me", response_model=UserOut)
+async def update_me(
+    payload: UpdateMeRequest = Body(...),
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> UserOut:
+    try:
+        ZoneInfo(payload.timezone)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid timezone. Use an IANA name like 'Asia/Kolkata'.",
+        ) from exc
+    current_user.timezone = payload.timezone
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
     return user_out(current_user)
 
 

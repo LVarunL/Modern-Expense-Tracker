@@ -165,6 +165,7 @@ export interface AuthUser {
   id: string;
   email: string;
   has_password: boolean;
+  timezone: string;
 }
 
 export interface AuthResponse {
@@ -199,6 +200,10 @@ export interface LogoutRequest {
 
 export interface DeleteAccountRequest {
   password?: string;
+}
+
+export interface UpdateMeRequest {
+  timezone: string;
 }
 
 export interface MessageResponse {

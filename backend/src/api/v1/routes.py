@@ -106,7 +106,11 @@ async def parse_text(
     parser: LLMParser = Depends(get_parser),
     current_user: User = Depends(get_current_user),
 ) -> ParseResponse:
-    tzinfo = ZoneInfo("Asia/Kolkata")
+    tz_name = current_user.timezone or "UTC"
+    try:
+        tzinfo = ZoneInfo(tz_name)
+    except Exception:  # noqa: BLE001
+        tzinfo = ZoneInfo("UTC")
     reference_datetime = payload.reference_datetime
     if reference_datetime is None:
         reference_datetime = datetime.now(tzinfo)

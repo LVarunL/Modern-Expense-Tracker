@@ -58,12 +58,13 @@ async def analytics_series(
     from_ms: int = Query(..., description="Epoch milliseconds start time (inclusive)."),
     to_ms: int = Query(..., description="Epoch milliseconds end time (exclusive)."),
     bucket: AnalyticsBucket = Query(default=AnalyticsBucket.day),
-    tz: str = Query(default="UTC"),
+    tz: str | None = Query(default=None),
     filters: list[FilterClause[TransactionField]] = Depends(get_transaction_filters),
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> AnalyticsSeriesResponse:
-    _ensure_timezone(tz)
+    resolved_tz = tz or current_user.timezone or "UTC"
+    _ensure_timezone(resolved_tz)
     try:
         date_range = normalize_epoch_range(from_ms, to_ms)
     except ValueError as exc:
@@ -77,7 +78,7 @@ async def analytics_series(
         user_id=current_user.id,
         date_range=date_range,
         bucket=bucket,
-        tz=tz,
+        tz=resolved_tz,
         filters=filters,
     )
     return AnalyticsSeriesResponse(bucket=bucket, items=items)

@@ -4,10 +4,10 @@ import type { AnalyticsBucket } from "../api/types";
 import {
   deriveAnalyticsBucket,
   formatRangeLabel,
-  getDeviceTimeZone,
   resolveAnalyticsRange,
 } from "../utils/analyticsRange";
 import { validateTimeRange, type TimeRangeFilter } from "../utils/timeRange";
+import { getDeviceTimeZone } from "../utils/timezone";
 
 const DEFAULT_RANGE: TimeRangeFilter = {
   preset: "last30",

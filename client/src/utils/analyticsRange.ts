@@ -47,10 +47,6 @@ export function deriveAnalyticsBucket(
   return "month";
 }
 
-export function getDeviceTimeZone(): string {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
-}
-
 export function formatRangeLabel(range: TimeRangeFilter): string {
   switch (range.preset) {
     case "today":
